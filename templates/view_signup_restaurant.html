@@ -1,0 +1,43 @@
+{% include "_top.html" %}
+
+<main class="w-full h-100vh d-flex p-items-center">
+
+    <form id="frm_restaurant_signup" class="w-25% d-flex flex-col gap-4 mx-auto">
+
+        <div class="d-flex flex-col">
+            <label for="restaurant_name">
+                <span>Restaurant name</span>
+            </label>
+            <input name="restaurant_name" type="text" mix-check="{{ x.RESTAURANT_NAME_REGEX }}">
+        </div>
+
+
+
+        <div class="d-flex flex-col">
+            <label for="restaurant_email">
+                <span>email</span>
+            </label>
+            <input name="restaurant_email" type="text" mix-check="{{ x.REGEX_EMAIL }}">
+        </div>
+
+
+        <div class="d-flex flex-col">
+            <label for="restaurant_password" class="d-flex">
+                <span>password</span>
+                <span class="ml-auto text-c-gray:+25">{{ x.RESTAURANT_PASSWORD_MIN }} to {{ x.RESTAURANT_PASSWORD_MAX }}
+                    chars</span>
+            </label>
+            <input name="restaurant_password" type="text" mix-check="{{ x.REGEX_RESTAURANT_PASSWORD }}">
+        </div>
+
+        <button mix-post="/restaurants" mix-data="#frm_restaurant_signup">
+            Signup
+        </button>
+
+        <a href="{{url_for('view_login')}}" class="text-a-center">Login</a>
+
+    </form>
+
+</main>
+
+{% include "_bottom.html" %}

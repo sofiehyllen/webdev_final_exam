@@ -68,6 +68,22 @@ def view_signup():
             return redirect(url_for("view_partner"))         
     return render_template("view_signup.html", x=x, title="Signup")
 
+##############################
+@app.get("/signup_restaurant")
+@x.no_cache
+def view_signup_restaurant():  
+    ic(session)
+    if session.get("user"):
+        if len(session.get("user").get("roles")) > 1:
+            return redirect(url_for("view_choose_role")) 
+        if "admin" in session.get("user").get("roles"):
+            return redirect(url_for("view_admin"))
+        if "customer" in session.get("user").get("roles"):
+            return redirect(url_for("view_customer")) 
+        if "partner" in session.get("user").get("roles"):
+            return redirect(url_for("view_partner"))         
+    return render_template("view_signup_restaurant.html", x=x, title="Signup Restaurant")
+
 
 ##############################
 @app.get("/login")
@@ -180,6 +196,19 @@ def signup():
 
         db, cursor = x.db()
 
+        q_check_email = """
+        SELECT 'exists' FROM users WHERE user_email = %s
+        UNION
+        SELECT 'exists' FROM restaurants WHERE restaurant_email = %s
+        """
+        cursor.execute(q_check_email, (user_email, user_email))
+        result = cursor.fetchone()
+        
+        if result:
+            toast = render_template("___toast.html", message="email not available")
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+
+
         cursor.execute('SELECT role_pk FROM roles WHERE role_name = %s', (selected_role,))
         result = cursor.fetchone()
 
@@ -220,6 +249,69 @@ def signup():
         if "db" in locals(): db.close()
 
 
+
+##############################
+@app.post("/restaurants")
+@x.no_cache
+def signup_restaurant():
+    try:
+        restaurant_name = x.validate_restaurant_name()
+        restaurant_email = x.validate_restaurant_email()
+        restaurant_password = x.validate_restaurant_password()
+        hashed_password = generate_password_hash(restaurant_password)
+        
+        restaurant_pk = str(uuid.uuid4())
+        restaurant_created_at = int(time.time())
+        restaurant_deleted_at = 0
+        restaurant_blocked_at = 0
+        restaurant_updated_at = 0
+        restaurant_verified_at = 0
+        restaurant_verification_key = str(uuid.uuid4())
+
+        db, cursor = x.db()
+
+        q_check_email = """
+        SELECT 'exists' FROM users WHERE user_email = %s
+        UNION
+        SELECT 'exists' FROM restaurants WHERE restaurant_email = %s
+        """
+        cursor.execute(q_check_email, (restaurant_email, restaurant_email))
+        result = cursor.fetchone()
+        
+        if result:
+            toast = render_template("___toast.html", message="email not available")
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+
+
+        q = 'INSERT INTO restaurants VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+        cursor.execute(q, (restaurant_pk, restaurant_name, restaurant_email, 
+                            hashed_password, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
+                            restaurant_updated_at, restaurant_verified_at, restaurant_verification_key))
+        
+        
+        # x.send_verify_email(user_email, user_verification_key)
+
+        db.commit()
+    
+        return """<template mix-redirect="/login"></template>""", 201
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            toast = render_template("___toast.html", message=ex.message)
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", ex.code    
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            if "restaurants.restaurant_email" in str(ex): 
+                toast = render_template("___toast.html", message="email not available")
+                return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+            return f"""<template mix-target="#toast" mix-bottom>System upgrating</template>""", 500        
+        return f"""<template mix-target="#toast" mix-bottom>System under maintenance</template>""", 500    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
 ##############################
 @app.post("/login")
 def login():
@@ -229,6 +321,7 @@ def login():
         user_password = x.validate_user_password()
 
         db, cursor = x.db()
+
         q = """ SELECT * FROM users 
                 JOIN users_roles 
                 ON user_pk = user_role_user_fk 
@@ -236,13 +329,19 @@ def login():
                 ON role_pk = user_role_role_fk
                 WHERE user_email = %s"""
         cursor.execute(q, (user_email,))
+
         rows = cursor.fetchall()
+
         if not rows:
             toast = render_template("___toast.html", message="user not registered")
             return f"""<template mix-target="#toast">{toast}</template>""", 400     
         if not check_password_hash(rows[0]["user_password"], user_password):
             toast = render_template("___toast.html", message="invalid credentials")
             return f"""<template mix-target="#toast">{toast}</template>""", 401
+        if rows[0]["user_verified_at"] == 0:
+            toast = render_template("___toast.html", message="Account not verified")
+            return f"""<template mix-target="#toast">{toast}</template>""", 403
+        
         
         roles = []
         for row in rows:

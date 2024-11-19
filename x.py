@@ -75,14 +75,15 @@ def allow_origin(origin="*"):
     return decorator
 
 
+NAME_MIN = 2
+NAME_MAX = 20
+NAME_REGEX = f"^.{{{NAME_MIN},{NAME_MAX}}}$"
+
 ##############################
-USER_NAME_MIN = 2
-USER_NAME_MAX = 20
-USER_NAME_REGEX = f"^.{{{USER_NAME_MIN},{USER_NAME_MAX}}}$"
 def validate_user_name():
-    error = f"name {USER_NAME_MIN} to {USER_NAME_MAX} characters"
+    error = f"name {NAME_MIN} to {NAME_MAX} characters"
     user_name = request.form.get("user_name", "").strip()
-    if not re.match(USER_NAME_REGEX, user_name): raise_custom_exception(error, 400)
+    if not re.match(NAME_REGEX, user_name): raise_custom_exception(error, 400)
     return user_name
 
 ##############################
@@ -132,6 +133,30 @@ def validate_user_role():
         raise_custom_exception("invalid role", 400)
     return user_role
 
+RESTAURANT_NAME_MIN = 2
+RESTAURANT_NAME_MAX = 50
+RESTAURANT_NAME_REGEX = f"^.{{{RESTAURANT_NAME_MIN},{RESTAURANT_NAME_MAX}}}$"
+def validate_restaurant_name():
+    error = f"name {RESTAURANT_NAME_MIN} to {RESTAURANT_NAME_MAX} characters"
+    restaurant_name = request.form.get("restaurant_name", "")
+    if not re.match(RESTAURANT_NAME_REGEX, restaurant_name): raise_custom_exception(error, 400)
+    return restaurant_name
+
+def validate_restaurant_email():
+    error = "email invalid"
+    restaurant_email = request.form.get("restaurant_email", "").strip()
+    if not re.match(REGEX_EMAIL, restaurant_email): raise_custom_exception(error, 400)
+    return restaurant_email
+
+
+RESTAURANT_PASSWORD_MIN = 8
+RESTAURANT_PASSWORD_MAX = 50
+REGEX_RESTAURANT_PASSWORD = f"^.{{{RESTAURANT_PASSWORD_MIN},{RESTAURANT_PASSWORD_MAX}}}$"
+def validate_restaurant_password():
+    error = f"password {RESTAURANT_PASSWORD_MIN} to {RESTAURANT_PASSWORD_MAX} characters"
+    restaurant_password = request.form.get("restaurant_password", "").strip()
+    if not re.match(REGEX_RESTAURANT_PASSWORD, restaurant_password): raise_custom_exception(error, 400)
+    return restaurant_password
 
 
 ##############################
