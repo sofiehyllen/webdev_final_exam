@@ -127,7 +127,7 @@ USER_ROLES = ["admin", "customer", "partner", "restaurant"]
 def validate_user_role():
     error = "role is missing"
     user_role = request.form.get("user_role", "")
-    if user_role not in USER_ROLES: raise_custom_exception(error, 400)
+    if not user_role: raise_custom_exception(error, 400)
     return user_role
 
 

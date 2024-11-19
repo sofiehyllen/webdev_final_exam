@@ -163,6 +163,7 @@ def logout():
 @x.no_cache
 def signup():
     try:
+        selected_role = x.validate_user_role() 
         user_name = x.validate_user_name()
         user_last_name = x.validate_user_last_name()
         user_email = x.validate_user_email()
@@ -179,9 +180,11 @@ def signup():
 
         db, cursor = x.db()
 
-        default_role = "customer"
-        cursor.execute('SELECT role_pk FROM roles WHERE role_name = %s', (default_role,))
+        cursor.execute('SELECT role_pk FROM roles WHERE role_name = %s', (selected_role,))
         result = cursor.fetchone()
+
+        if not result:
+                    return "Role not found", 404
 
         user_role = result["role_pk"]
 
