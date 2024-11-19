@@ -123,11 +123,13 @@ def validate_uuid4(uuid4 = ""):
     return uuid4
 
 ##############################
-USER_ROLES = ["admin", "customer", "partner", "restaurant"]
+USER_ROLES = ["customer", "partner", "restaurant"]
 def validate_user_role():
-    error = "role is missing"
     user_role = request.form.get("user_role", "")
-    if not user_role: raise_custom_exception(error, 400)
+    if not user_role: 
+        raise_custom_exception("role is required", 400)
+    if user_role not in USER_ROLES: 
+        raise_custom_exception("invalid role", 400)
     return user_role
 
 
