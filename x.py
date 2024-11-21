@@ -181,7 +181,7 @@ def validate_item_image():
         return file, filename 
 
 ##############################
-def send_verify_email(to_email, user_verification_key):
+def send_verify_email(to_email, account_verification_key):
     try:
         # Create a gmail fullflaskdemomail
         # Enable (turn on) 2 step verification/factor in the google account manager
@@ -199,10 +199,10 @@ def send_verify_email(to_email, user_verification_key):
         message = MIMEMultipart()
         message["From"] = "My company name"
         message["To"] = receiver_email
-        message["Subject"] = "Please verify your account"
+        message["Subject"] = "Verify your account"
 
         # Body of the email
-        body = f"""To verify your account, please <a href="http://127.0.0.1/verify/{user_verification_key}">click here</a>"""
+        body = f"""To verify your account, please <a href="http://127.0.0.1/verify/{account_verification_key}">click here</a>"""
         message.attach(MIMEText(body, "html"))
 
         # Connect to Gmail's SMTP server and send the email

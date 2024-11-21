@@ -204,7 +204,7 @@ def signup():
         user_blocked_at = 0
         user_updated_at = 0
         user_verified_at = 0
-        user_verification_key = str(uuid.uuid4())
+        account_verification_key = str(uuid.uuid4())
 
         db, cursor = x.db()
 
@@ -230,12 +230,12 @@ def signup():
         q = 'INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
         cursor.execute(q, (user_pk, user_name, user_last_name, user_email, 
                             hashed_password, user_created_at, user_deleted_at, user_blocked_at, 
-                            user_updated_at, user_verified_at, user_verification_key))
+                            user_updated_at, user_verified_at, account_verification_key))
         
         q_roles = 'INSERT INTO users_roles (user_role_user_fk, user_role_role_fk) VALUES (%s, %s)'
         cursor.execute(q_roles, (user_pk, user_role))
 
-        # x.send_verify_email(user_email, user_verification_key)
+        x.send_verify_email(user_email, account_verification_key)
 
         db.commit()
     
@@ -276,7 +276,7 @@ def signup_restaurant():
         restaurant_blocked_at = 0
         restaurant_updated_at = 0
         restaurant_verified_at = 0
-        restaurant_verification_key = str(uuid.uuid4())
+        account_verification_key = str(uuid.uuid4())
 
         db, cursor = x.db()
 
@@ -294,10 +294,10 @@ def signup_restaurant():
         q = 'INSERT INTO restaurants VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
         cursor.execute(q, (restaurant_pk, restaurant_name, restaurant_email, 
                             hashed_password, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
-                            restaurant_updated_at, restaurant_verified_at, restaurant_verification_key))
+                            restaurant_updated_at, restaurant_verified_at, account_verification_key))
         
         
-        # x.send_verify_email(restaurant_email, user_verification_key)
+        x.send_verify_email(restaurant_email, account_verification_key)
 
         db.commit()
     
