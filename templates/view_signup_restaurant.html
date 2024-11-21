@@ -8,7 +8,7 @@
             <label for="restaurant_name">
                 <span>Restaurant name</span>
             </label>
-            <input name="restaurant_name" type="text" mix-check="{{ x.RESTAURANT_NAME_REGEX }}">
+            <input name="restaurant_name" type="text" mix-check="{{ x.NAME_REGEX }}">
         </div>
 
 
@@ -17,17 +17,17 @@
             <label for="restaurant_email">
                 <span>email</span>
             </label>
-            <input name="restaurant_email" type="text" mix-check="{{ x.REGEX_EMAIL }}">
+            <input name="restaurant_email" type="text" mix-check="{{ x.EMAIL_REGEX }}">
         </div>
 
 
         <div class="d-flex flex-col">
             <label for="restaurant_password" class="d-flex">
                 <span>password</span>
-                <span class="ml-auto text-c-gray:+25">{{ x.RESTAURANT_PASSWORD_MIN }} to {{ x.RESTAURANT_PASSWORD_MAX }}
+                <span class="ml-auto text-c-gray:+25">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }}
                     chars</span>
             </label>
-            <input name="restaurant_password" type="text" mix-check="{{ x.REGEX_RESTAURANT_PASSWORD }}">
+            <input name="restaurant_password" type="text" mix-check="{{ x.PASSWORD_REGEX }}">
         </div>
 
         <button mix-post="/restaurants" mix-data="#frm_restaurant_signup">

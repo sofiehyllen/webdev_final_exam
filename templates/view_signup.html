@@ -13,7 +13,6 @@
                 <option disabled selected value> -- Select an option -- </option>
                 <option value="customer">Customer</option>
                 <option value="partner">Partner</option>
-                <option value="restaurant">Restaurant</option>
             </select>
         </div>
 
@@ -29,14 +28,14 @@
             <label for="user_last_name">
                 <span>Last name</span>
             </label>
-            <input name="user_last_name" type="text" mix-check="{{ x.USER_LAST_NAME_REGEX }}">
+            <input name="user_last_name" type="text" mix-check="{{ x.NAME_REGEX }}">
         </div>
 
         <div class="d-flex flex-col">
             <label for="user_email">
                 <span>email</span>
             </label>
-            <input name="user_email" type="text" mix-check="{{ x.REGEX_EMAIL }}">
+            <input name="user_email" type="text" mix-check="{{ x.EMAIL_REGEX }}">
         </div>
 
 
@@ -46,7 +45,7 @@
                 <span class="ml-auto text-c-gray:+25">{{ x.USER_PASSWORD_MIN }} to {{ x.USER_PASSWORD_MAX }}
                     chars</span>
             </label>
-            <input name="user_password" type="text" mix-check="{{ x.REGEX_USER_PASSWORD }}">
+            <input name="user_password" type="text" mix-check="{{ x.PASSWORD_REGEX }}">
         </div>
 
         <button mix-post="/users" mix-data="#frm_user_signup">

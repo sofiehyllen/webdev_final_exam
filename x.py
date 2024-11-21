@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from icecream import ic
 ic.configureOutput(prefix=f'***** | ', includeContext=True)
 
-UNSPLASH_ACCESS_KEY = 'YOUR_KEY_HERE'
+UNSPLASH_ACCESS_KEY = 'YOUR_KEY_HERE'   
 ADMIN_ROLE_PK = "16fd2706-8baf-433b-82eb-8c7fada847da"
 CUSTOMER_ROLE_PK = "c56a4180-65aa-42ec-a945-5fd21dec0538"
 PARTNER_ROLE_PK = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
@@ -76,55 +76,62 @@ def allow_origin(origin="*"):
 
 
 NAME_MIN = 2
-NAME_MAX = 20
+NAME_MAX = 50
 NAME_REGEX = f"^.{{{NAME_MIN},{NAME_MAX}}}$"
+PASSWORD_MIN = 8
+PASSWORD_MAX = 50
+PASSWORD_REGEX = f"^.{{{PASSWORD_MIN},{PASSWORD_MAX}}}$"
+
+EMAIL_REGEX = "^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
+UUID4_REGEX = "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+
+USER_ROLES = ["customer", "partner"]
+UPLOAD_ITEM_FOLDER = './images'
+ALLOWED_ITEM_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
 
 ##############################
 def validate_user_name():
-    error = f"name {NAME_MIN} to {NAME_MAX} characters"
+    error = f"Name must be {NAME_MIN} to {NAME_MAX} characters."
     user_name = request.form.get("user_name", "").strip()
     if not re.match(NAME_REGEX, user_name): raise_custom_exception(error, 400)
     return user_name
 
-##############################
-USER_LAST_NAME_MIN = 2
-USER_LAST_NAME_MAX = 20
-USER_LAST_NAME_REGEX = f"^.{{{USER_LAST_NAME_MIN},{USER_LAST_NAME_MAX}}}$"
-def validate_user_last_name():
-    error = f"last name {USER_LAST_NAME_MIN} to {USER_LAST_NAME_MAX} characters"
-    user_last_name = request.form.get("user_last_name", "").strip() # None
-    if not re.match(USER_LAST_NAME_REGEX, user_last_name): raise_custom_exception(error, 400)
-    return user_last_name
 
 ##############################
-REGEX_EMAIL = "^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
+def validate_user_last_name():
+    error = f"Lastname must be {NAME_MIN} to {NAME_MAX} characters."
+    user_last_name = request.form.get("user_last_name", "").strip() # None
+    if not re.match(NAME_REGEX, user_last_name): raise_custom_exception(error, 400)
+    return user_last_name
+
+
+##############################
 def validate_user_email():
     error = "email invalid"
     user_email = request.form.get("user_email", "").strip()
-    if not re.match(REGEX_EMAIL, user_email): raise_custom_exception(error, 400)
+    if not re.match(EMAIL_REGEX, user_email): raise_custom_exception(error, 400)
     return user_email
 
-##############################
-USER_PASSWORD_MIN = 8
-USER_PASSWORD_MAX = 50
-REGEX_USER_PASSWORD = f"^.{{{USER_PASSWORD_MIN},{USER_PASSWORD_MAX}}}$"
-def validate_user_password():
-    error = f"password {USER_PASSWORD_MIN} to {USER_PASSWORD_MAX} characters"
-    user_password = request.form.get("user_password", "").strip()
-    if not re.match(REGEX_USER_PASSWORD, user_password): raise_custom_exception(error, 400)
-    return user_password
 
 ##############################
-REGEX_UUID4 = "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+def validate_user_password():
+    error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
+    user_password = request.form.get("user_password", "").strip()
+    if not re.match(PASSWORD_REGEX, user_password): raise_custom_exception(error, 400)
+    return user_password
+
+
+##############################
 def validate_uuid4(uuid4 = ""):
     error = f"invalid uuid4"
     if not uuid4:
         uuid4 = request.values.get("uuid4", "").strip()
-    if not re.match(REGEX_UUID4, uuid4): raise_custom_exception(error, 400)
+    if not re.match(UUID4_REGEX, uuid4): raise_custom_exception(error, 400)
     return uuid4
 
+
 ##############################
-USER_ROLES = ["customer", "partner", "restaurant"]
 def validate_user_role():
     user_role = request.form.get("user_role", "")
     if not user_role: 
@@ -133,35 +140,32 @@ def validate_user_role():
         raise_custom_exception("invalid role", 400)
     return user_role
 
-RESTAURANT_NAME_MIN = 2
-RESTAURANT_NAME_MAX = 50
-RESTAURANT_NAME_REGEX = f"^.{{{RESTAURANT_NAME_MIN},{RESTAURANT_NAME_MAX}}}$"
+
+##############################
 def validate_restaurant_name():
-    error = f"name {RESTAURANT_NAME_MIN} to {RESTAURANT_NAME_MAX} characters"
+    error = f"name {NAME_MIN} to {NAME_MAX} characters"
     restaurant_name = request.form.get("restaurant_name", "")
-    if not re.match(RESTAURANT_NAME_REGEX, restaurant_name): raise_custom_exception(error, 400)
+    if not re.match(NAME_REGEX, restaurant_name): raise_custom_exception(error, 400)
     return restaurant_name
 
+
+##############################
 def validate_restaurant_email():
     error = "email invalid"
     restaurant_email = request.form.get("restaurant_email", "").strip()
-    if not re.match(REGEX_EMAIL, restaurant_email): raise_custom_exception(error, 400)
+    if not re.match(EMAIL_REGEX, restaurant_email): raise_custom_exception(error, 400)
     return restaurant_email
 
 
-RESTAURANT_PASSWORD_MIN = 8
-RESTAURANT_PASSWORD_MAX = 50
-REGEX_RESTAURANT_PASSWORD = f"^.{{{RESTAURANT_PASSWORD_MIN},{RESTAURANT_PASSWORD_MAX}}}$"
+##############################
 def validate_restaurant_password():
-    error = f"password {RESTAURANT_PASSWORD_MIN} to {RESTAURANT_PASSWORD_MAX} characters"
+    error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
     restaurant_password = request.form.get("restaurant_password", "").strip()
-    if not re.match(REGEX_RESTAURANT_PASSWORD, restaurant_password): raise_custom_exception(error, 400)
+    if not re.match(PASSWORD_REGEX, restaurant_password): raise_custom_exception(error, 400)
     return restaurant_password
 
 
 ##############################
-UPLOAD_ITEM_FOLDER = './images'
-ALLOWED_ITEM_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 def validate_item_image():
     if 'item_file' not in request.files: raise_custom_exception("item_file missing", 400)

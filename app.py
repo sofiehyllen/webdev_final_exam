@@ -316,62 +316,89 @@ def signup_restaurant():
 @app.post("/login")
 def login():
     try:
-
         user_email = x.validate_user_email()
         user_password = x.validate_user_password()
 
         db, cursor = x.db()
 
-        q = """ SELECT * FROM users 
-                JOIN users_roles 
-                ON user_pk = user_role_user_fk 
-                JOIN roles
-                ON role_pk = user_role_role_fk
-                WHERE user_email = %s"""
-        cursor.execute(q, (user_email,))
+        # Check users table
+        user_query = """
+            SELECT 'user' AS account_type, user_pk AS account_pk, user_name AS account_name, 
+                    user_last_name AS account_last_name, user_email AS account_email, 
+                    user_password, user_verified_at, roles.role_name
+            FROM users
+            JOIN users_roles ON user_pk = user_role_user_fk
+            JOIN roles ON role_pk = user_role_role_fk
+            WHERE user_email = %s
+        """
+        cursor.execute(user_query, (user_email,))
+        user_rows = cursor.fetchall()
 
-        rows = cursor.fetchall()
+        # Check restaurants table
+        restaurant_query = """
+            SELECT 'restaurant' AS account_type, restaurant_pk AS account_pk, restaurant_name AS account_name, 
+                    NULL AS account_last_name, restaurant_email AS account_email, 
+                    restaurant_password AS user_password, restaurant_verified_at AS user_verified_at, 
+                    'restaurant' AS role_name
+            FROM restaurants
+            WHERE restaurant_email = %s
+        """
+        cursor.execute(restaurant_query, (user_email,))
+        restaurant_rows = cursor.fetchall()
+
+        rows = user_rows + restaurant_rows  # Combine results
 
         if not rows:
-            toast = render_template("___toast.html", message="user not registered")
-            return f"""<template mix-target="#toast">{toast}</template>""", 400     
+            toast = render_template("___toast.html", message="Account not registered")
+            return f"""<template mix-target="#toast">{toast}</template>""", 400
+
+        # Validate password
         if not check_password_hash(rows[0]["user_password"], user_password):
-            toast = render_template("___toast.html", message="invalid credentials")
+            toast = render_template("___toast.html", message="Invalid credentials")
             return f"""<template mix-target="#toast">{toast}</template>""", 401
-        if rows[0]["user_verified_at"] == 0:
+
+        # Verify account
+        if not rows[0]["user_verified_at"]:
             toast = render_template("___toast.html", message="Account not verified")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
-        
-        
-        roles = []
-        for row in rows:
-            roles.append(row["role_name"])
-        user = {
-            "user_pk": rows[0]["user_pk"],
-            "user_name": rows[0]["user_name"],
-            "user_last_name": rows[0]["user_last_name"],
-            "user_email": rows[0]["user_email"],
-            "roles": roles
+
+        # Process roles
+        roles = [row["role_name"] for row in rows]
+        account_type = rows[0]["account_type"]
+
+        account = {
+            "account_pk": rows[0]["account_pk"],
+            "account_name": rows[0]["account_name"],
+            "account_last_name": rows[0]["account_last_name"],
+            "account_email": rows[0]["account_email"],
+            "account_type": account_type,
+            "roles": roles,
         }
 
-        ic(user)
-        session["user"] = user
+        ic(account)
+        session["account"] = account
+
+        # Redirect based on roles
         if len(roles) == 1:
             return f"""<template mix-redirect="/{roles[0]}"></template>"""
         return f"""<template mix-redirect="/choose-role"></template>"""
+
     except Exception as ex:
         ic(ex)
-        if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): 
+        if "db" in locals():
+            db.rollback()
+        if isinstance(ex, x.CustomException):
             toast = render_template("___toast.html", message=ex.message)
-            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", ex.code    
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", ex.code
         if isinstance(ex, x.mysql.connector.Error):
             ic(ex)
-            return "<template>System upgrating</template>", 500        
-        return "<template>System under maintenance</template>", 500  
+            return "<template>System upgrading</template>", 500
+        return "<template>System under maintenance</template>", 500
     finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
+        if "cursor" in locals():
+            cursor.close()
+        if "db" in locals():
+            db.close()
 
 
 ##############################
@@ -571,13 +598,30 @@ def verify_user(verification_key):
         user_verified_at = int(time.time())
 
         db, cursor = x.db()
-        q = """ UPDATE users 
-                SET user_verified_at = %s 
-                WHERE user_verification_key = %s"""
-        cursor.execute(q, (user_verified_at, verification_key))
-        if cursor.rowcount != 1: x.raise_custom_exception("cannot verify account", 400)
-        db.commit()
-        return redirect(url_for("view_login", message="User verified, please login"))
+
+        user_query = """ 
+            UPDATE users 
+            SET user_verified_at = %s 
+            WHERE user_verification_key = %s
+        """
+        cursor.execute(user_query, (user_verified_at, verification_key))
+
+        if cursor.rowcount == 1:
+            db.commit()
+            return redirect(url_for("view_login", message="User verified, please login"))
+
+        restaurant_query = """ 
+            UPDATE restaurants 
+            SET restaurant_verified_at = %s 
+            WHERE restaurant_verification_key = %s
+        """
+        cursor.execute(restaurant_query, (user_verified_at, verification_key))
+
+        if cursor.rowcount == 1:
+            db.commit()
+            return redirect(url_for("view_login", message="Restaurant verified, please login"))
+
+        x.raise_custom_exception("Cannot verify account", 400)
 
     except Exception as ex:
         ic(ex)
