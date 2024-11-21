@@ -52,6 +52,7 @@ def view_index():
     name = "X"
     return render_template("view_index.html", name=name)
 
+
 ##############################
 @app.get("/signup")
 @x.no_cache
@@ -68,6 +69,7 @@ def view_signup():
             return redirect(url_for("view_partner"))         
     return render_template("view_signup.html", x=x, title="Signup")
 
+
 ##############################
 @app.get("/signup_restaurant")
 @x.no_cache
@@ -76,12 +78,8 @@ def view_signup_restaurant():
     if session.get("user"):
         if len(session.get("user").get("roles")) > 1:
             return redirect(url_for("view_choose_role")) 
-        if "admin" in session.get("user").get("roles"):
-            return redirect(url_for("view_admin"))
-        if "customer" in session.get("user").get("roles"):
-            return redirect(url_for("view_customer")) 
-        if "partner" in session.get("user").get("roles"):
-            return redirect(url_for("view_partner"))         
+        if "restaurant" in session.get("user").get("roles"):
+            return redirect(url_for("view_restaurant"))         
     return render_template("view_signup_restaurant.html", x=x, title="Signup Restaurant")
 
 
@@ -92,15 +90,17 @@ def view_login():
     # ic("#"*20, "VIEW_LOGIN")
     ic(session)
     # print(session, flush=True)  
-    if session.get("user"):
-        if len(session.get("user").get("roles")) > 1:
+    if session.get("account"):
+        if len(session.get("account").get("roles")) > 1:
             return redirect(url_for("view_choose_role")) 
-        if "admin" in session.get("user").get("roles"):
+        if "admin" in session.get("account").get("roles"):
             return redirect(url_for("view_admin"))
-        if "customer" in session.get("user").get("roles"):
+        if "customer" in session.get("account").get("roles"):
             return redirect(url_for("view_customer")) 
-        if "partner" in session.get("user").get("roles"):
+        if "partner" in session.get("account").get("roles"):
             return redirect(url_for("view_partner"))         
+        if "restaurant" in session.get("account").get("roles"):
+            return redirect(url_for("view_restaurant"))         
     return render_template("view_login.html", x=x, title="Login", message=request.args.get("message", ""))
 
 
@@ -108,47 +108,59 @@ def view_login():
 @app.get("/customer")
 @x.no_cache
 def view_customer():
-    if not session.get("user", ""): 
+    if not session.get("account", ""): 
         return redirect(url_for("view_login"))
-    user = session.get("user")
+    user = session.get("account")
     if len(user.get("roles", "")) > 1:
         return redirect(url_for("view_choose_role"))
     return render_template("view_customer.html", user=user)
+
 
 ##############################
 @app.get("/partner")
 @x.no_cache
 def view_partner():
-    if not session.get("user", ""): 
+    if not session.get("account", ""): 
         return redirect(url_for("view_login"))
-    user = session.get("user")
+    user = session.get("account")
     if len(user.get("roles", "")) > 1:
         return redirect(url_for("view_choose_role"))
-    return response
+    return render_template("view_partner.html", user=user)
 
 
 ##############################
 @app.get("/admin")
 @x.no_cache
 def view_admin():
-    if not session.get("user", ""): 
+    if not session.get("account", ""): 
         return redirect(url_for("view_login"))
-    user = session.get("user")
+    user = session.get("account")
     if not "admin" in user.get("roles", ""):
         return redirect(url_for("view_login"))
     return render_template("view_admin.html")
 
+
+##############################
+@app.get("/restaurant")
+@x.no_cache
+def view_restaurant():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    if len(user.get("roles", "")) > 1:
+        return redirect(url_for("view_choose_role"))
+    return render_template("view_restaurant.html", user=user)
 
 
 ##############################
 @app.get("/choose-role")
 @x.no_cache
 def view_choose_role():
-    if not session.get("user", ""): 
+    if not session.get("account", ""): 
         return redirect(url_for("view_login"))
-    if not len(session.get("user").get("roles")) >= 2:
+    if not len(session.get("account").get("roles")) >= 2:
         return redirect(url_for("view_login"))
-    user = session.get("user")
+    user = session.get("account")
     return render_template("view_choose_role.html", user=user, title="Choose role")
 
 
@@ -166,7 +178,7 @@ def _________POST_________(): pass
 def logout():
     # ic("#"*30)
     # ic(session)
-    session.pop("user", None)
+    session.pop("account", None)
     # session.clear()
     # session.modified = True
     # ic("*"*30)
