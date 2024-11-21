@@ -209,21 +209,19 @@ def signup():
         db, cursor = x.db()
 
         q_check_email = """
-        SELECT 'exists' FROM users WHERE user_email = %s
-        UNION
-        SELECT 'exists' FROM restaurants WHERE restaurant_email = %s
+        SELECT 'exists' FROM accounts WHERE account_email = %s
         """
-        cursor.execute(q_check_email, (user_email, user_email))
+        cursor.execute(q_check_email, (user_email,))
         result = cursor.fetchone()
         
         if result:
-            toast = render_template("___toast.html", message="email not available")
+            toast = render_template("___toast.html", message="Email not available")
             return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
 
-
         cursor.execute('SELECT role_pk FROM roles WHERE role_name = %s', (selected_role,))
-        result = cursor.fetchone()
 
+        result = cursor.fetchone()
+        
         if not result:
                     return "Role not found", 404
 
@@ -283,15 +281,13 @@ def signup_restaurant():
         db, cursor = x.db()
 
         q_check_email = """
-        SELECT 'exists' FROM users WHERE user_email = %s
-        UNION
-        SELECT 'exists' FROM restaurants WHERE restaurant_email = %s
+        SELECT 'exists' FROM accounts WHERE account_email = %s
         """
-        cursor.execute(q_check_email, (restaurant_email, restaurant_email))
+        cursor.execute(q_check_email, (restaurant_email,))
         result = cursor.fetchone()
         
         if result:
-            toast = render_template("___toast.html", message="email not available")
+            toast = render_template("___toast.html", message="Email not available")
             return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
 
 
@@ -301,7 +297,7 @@ def signup_restaurant():
                             restaurant_updated_at, restaurant_verified_at, restaurant_verification_key))
         
         
-        # x.send_verify_email(user_email, user_verification_key)
+        # x.send_verify_email(restaurant_email, user_verification_key)
 
         db.commit()
     
@@ -333,57 +329,38 @@ def login():
 
         db, cursor = x.db()
 
-        # Check users table
-        user_query = """
-            SELECT 'user' AS account_type, user_pk AS account_pk, user_name AS account_name, 
-                    user_last_name AS account_last_name, user_email AS account_email, 
-                    user_password, user_verified_at, roles.role_name
-            FROM users
-            JOIN users_roles ON user_pk = user_role_user_fk
-            JOIN roles ON role_pk = user_role_role_fk
-            WHERE user_email = %s
+        # Query the accounts view to check both users and restaurants
+        query = """
+            SELECT account_pk, account_name, account_name, account_email,
+                    account_password, account_verified_at, account_role
+            FROM accounts
+            WHERE account_email = %s
         """
-        cursor.execute(user_query, (user_email,))
-        user_rows = cursor.fetchall()
+        cursor.execute(query, (user_email,))
+        rows = cursor.fetchall()
 
-        # Check restaurants table
-        restaurant_query = """
-            SELECT 'restaurant' AS account_type, restaurant_pk AS account_pk, restaurant_name AS account_name, 
-                    NULL AS account_last_name, restaurant_email AS account_email, 
-                    restaurant_password AS user_password, restaurant_verified_at AS user_verified_at, 
-                    'restaurant' AS role_name
-            FROM restaurants
-            WHERE restaurant_email = %s
-        """
-        cursor.execute(restaurant_query, (user_email,))
-        restaurant_rows = cursor.fetchall()
-
-        rows = user_rows + restaurant_rows  # Combine results
-
+        # If no account is found, return an error
         if not rows:
             toast = render_template("___toast.html", message="Account not registered")
             return f"""<template mix-target="#toast">{toast}</template>""", 400
 
         # Validate password
-        if not check_password_hash(rows[0]["user_password"], user_password):
+        if not check_password_hash(rows[0]["account_password"], user_password):
             toast = render_template("___toast.html", message="Invalid credentials")
             return f"""<template mix-target="#toast">{toast}</template>""", 401
 
         # Verify account
-        if not rows[0]["user_verified_at"]:
+        if not rows[0]["account_verified_at"]:
             toast = render_template("___toast.html", message="Account not verified")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
 
         # Process roles
-        roles = [row["role_name"] for row in rows]
-        account_type = rows[0]["account_type"]
+        roles = [row["account_role"] for row in rows]
 
         account = {
             "account_pk": rows[0]["account_pk"],
             "account_name": rows[0]["account_name"],
-            "account_last_name": rows[0]["account_last_name"],
             "account_email": rows[0]["account_email"],
-            "account_type": account_type,
             "roles": roles,
         }
 
@@ -411,6 +388,7 @@ def login():
             cursor.close()
         if "db" in locals():
             db.close()
+
 
 
 ##############################

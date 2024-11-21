@@ -221,4 +221,47 @@ def send_verify_email(to_email, user_verification_key):
 
 
 
+##############################
+def send_reset_password_email(to_email, reset_key):
+    try:
+        # Email and password of the sender's Gmail account
+        sender_email = "sofiefuglsanghyllen@gmail.com"
+        password = "jsdfsqosuxtlakab"  # If 2FA is on, use an App Password instead
+
+        # Receiver email address
+        receiver_email = to_email
+        
+        # Create the email message
+        message = MIMEMultipart()
+        message["From"] = "My company name"
+        message["To"] = receiver_email
+        message["Subject"] = "Reset Your Password"
+
+        # Body of the email
+        body = f"""
+        <p>Hello,</p>
+        <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
+        <p><a href="http://127.0.0.1/reset-password/{reset_key}">Reset Your Password</a></p>
+        <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
+        <p>Thank you,<br>My company name</p>
+        """
+        message.attach(MIMEText(body, "html"))
+
+        # Connect to Gmail's SMTP server and send the email
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Upgrade the connection to secure
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message.as_string())
+        print("Reset password email sent successfully!")
+
+        return "reset email sent"
+
+    except Exception as ex:
+        raise_custom_exception("cannot send reset email", 500)
+    finally:
+        pass
+
+
+
+
 
