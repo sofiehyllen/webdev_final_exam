@@ -91,38 +91,6 @@ ALLOWED_ITEM_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
 ##############################
-def validate_user_name():
-    error = f"Name must be {NAME_MIN} to {NAME_MAX} characters."
-    user_name = request.form.get("user_name", "").strip()
-    if not re.match(NAME_REGEX, user_name): raise_custom_exception(error, 400)
-    return user_name
-
-
-##############################
-def validate_user_last_name():
-    error = f"Lastname must be {NAME_MIN} to {NAME_MAX} characters."
-    user_last_name = request.form.get("user_last_name", "").strip() # None
-    if not re.match(NAME_REGEX, user_last_name): raise_custom_exception(error, 400)
-    return user_last_name
-
-
-##############################
-def validate_user_email():
-    error = "email invalid"
-    user_email = request.form.get("user_email", "").strip()
-    if not re.match(EMAIL_REGEX, user_email): raise_custom_exception(error, 400)
-    return user_email
-
-
-##############################
-def validate_user_password():
-    error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
-    user_password = request.form.get("user_password", "").strip()
-    if not re.match(PASSWORD_REGEX, user_password): raise_custom_exception(error, 400)
-    return user_password
-
-
-##############################
 def validate_uuid4(uuid4 = ""):
     error = f"invalid uuid4"
     if not uuid4:
@@ -142,35 +110,21 @@ def validate_user_role():
 
 
 ##############################
-def validate_restaurant_name():
-    error = f"name {NAME_MIN} to {NAME_MAX} characters"
-    restaurant_name = request.form.get("restaurant_name", "")
-    if not re.match(NAME_REGEX, restaurant_name): raise_custom_exception(error, 400)
-    return restaurant_name
-
-
-##############################
-def validate_restaurant_email():
-    error = "email invalid"
-    restaurant_email = request.form.get("restaurant_email", "").strip()
-    if not re.match(EMAIL_REGEX, restaurant_email): raise_custom_exception(error, 400)
-    return restaurant_email
-
-
-##############################
-def validate_restaurant_password():
-    error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
-    restaurant_password = request.form.get("restaurant_password", "").strip()
-    if not re.match(PASSWORD_REGEX, restaurant_password): raise_custom_exception(error, 400)
-    return restaurant_password
+def validate_account_name(form_field):
+    error = f"name {NAME_MIN} to {NAME_MAX} characters."
+    account_name = request.form.get(form_field, "").strip()
+    if not re.match(NAME_REGEX, account_name): raise_custom_exception(error, 400)
+    return account_name
 
 
 ##############################
 def validate_account_email(form_field):
-    error = "email invalid"
+    error = "Email invalid"
     account_email = request.form.get(form_field, "").strip()
     if not re.match(EMAIL_REGEX, account_email): raise_custom_exception(error, 400)
     return account_email
+
+
 ##############################
 def validate_account_password(form_field):
     error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
