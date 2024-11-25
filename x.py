@@ -166,6 +166,21 @@ def validate_restaurant_password():
 
 
 ##############################
+def validate_account_email(form_field):
+    error = "email invalid"
+    account_email = request.form.get(form_field, "").strip()
+    if not re.match(EMAIL_REGEX, account_email): raise_custom_exception(error, 400)
+    return account_email
+##############################
+def validate_account_password(form_field):
+    error = f"password {PASSWORD_MIN} to {PASSWORD_MAX} characters"
+    account_password = request.form.get(form_field, "").strip()
+    if not re.match(PASSWORD_REGEX, account_password): raise_custom_exception(error, 400)
+    return account_password
+
+
+
+##############################
 
 def validate_item_image():
     if 'item_file' not in request.files: raise_custom_exception("item_file missing", 400)
@@ -189,8 +204,9 @@ def send_verify_email(to_email, account_verification_key):
 
 
         # Email and password of the sender's Gmail account
-        sender_email = "sofiefuglsanghyllen@gmail.com"
-        password = "jsdfsqosuxtlakab"  # If 2FA is on, use an App Password instead
+        sender_email = "exampythonmail@gmail.com"
+        password = "qtgoaneaffxkqcjp"  # If 2FA is on, use an App Password instead
+
 
         # Receiver email address
         receiver_email = to_email
@@ -222,11 +238,11 @@ def send_verify_email(to_email, account_verification_key):
 
 
 ##############################
-def send_reset_password_email(to_email, reset_key):
+def send_reset_password_email(to_email, account_password_reset_key):
     try:
         # Email and password of the sender's Gmail account
-        sender_email = "sofiefuglsanghyllen@gmail.com"
-        password = "jsdfsqosuxtlakab"  # If 2FA is on, use an App Password instead
+        sender_email = "exampythonmail@gmail.com"
+        password = "qtgoaneaffxkqcjp"  # If 2FA is on, use an App Password instead
 
         # Receiver email address
         receiver_email = to_email
@@ -241,7 +257,7 @@ def send_reset_password_email(to_email, reset_key):
         body = f"""
         <p>Hello,</p>
         <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
-        <p><a href="http://127.0.0.1/reset-password/{reset_key}">Reset Your Password</a></p>
+        <p><a href="http://127.0.0.1/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
         <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
         <p>Thank you,<br>My company name</p>
         """
