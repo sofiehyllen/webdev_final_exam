@@ -49,8 +49,7 @@ def view_test_get_redis():
 ##############################
 @app.get("/")
 def view_index():
-    name = "X"
-    return render_template("view_index.html", name=name)
+    return render_template("view_index.html")
 
 
 ##############################
@@ -175,12 +174,10 @@ def view_forgot_password():
 @app.get("/reset-password/<reset_password_key>")
 @x.no_cache
 def view_reset_password(reset_password_key):
-    try:
-        reset_password_key = x.validate_uuid4(reset_password_key)
-        return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
-    except Exception as ex:
-        ic(ex)
-        return "Invalid or expired reset link.", 400
+    if not reset_password_key:
+        return redirect(url_for("view_login"))
+    return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
+
 
 ##############################
 ##############################
@@ -210,10 +207,10 @@ def logout():
 def signup():
     try:
         selected_role = x.validate_user_role() 
-        user_name = x.validate_user_name()
-        user_last_name = x.validate_user_last_name()
-        user_email = x.validate_user_email()
-        user_password = x.validate_user_password()
+        user_name = x.validate_account_name("user_name")
+        user_last_name = x.validate_account_name("user_last_name")
+        user_email = x.validate_account_email("user_email")
+        user_password = x.validate_account_password("user_password")
         hashed_password = generate_password_hash(user_password)
         
         user_pk = str(uuid.uuid4())
@@ -223,7 +220,6 @@ def signup():
         user_updated_at = 0
         user_verified_at = 0
         account_verification_key = str(uuid.uuid4())
-        account_reset_password_key = str(uuid.uuid4())
 
         db, cursor = x.db()
 
@@ -246,10 +242,16 @@ def signup():
 
         user_role = result["role_pk"]
 
-        q = 'INSERT INTO users VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+        q = '''
+            INSERT INTO users 
+            (user_pk, user_name, user_last_name, user_email, user_password, user_created_at, 
+            user_deleted_at, user_blocked_at, user_updated_at, user_verified_at, user_verification_key)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            '''
         cursor.execute(q, (user_pk, user_name, user_last_name, user_email, 
                             hashed_password, user_created_at, user_deleted_at, user_blocked_at, 
-                            user_updated_at, user_verified_at, account_verification_key, account_reset_password_key))
+                            user_updated_at, user_verified_at, account_verification_key))
+
         
         q_roles = 'INSERT INTO users_roles (user_role_user_fk, user_role_role_fk) VALUES (%s, %s)'
         cursor.execute(q_roles, (user_pk, user_role))
@@ -284,9 +286,9 @@ def signup():
 @x.no_cache
 def signup_restaurant():
     try:
-        restaurant_name = x.validate_restaurant_name()
-        restaurant_email = x.validate_restaurant_email()
-        restaurant_password = x.validate_restaurant_password()
+        restaurant_name = x.validate_account_name("restaurant_name")
+        restaurant_email = x.validate_account_email("restaurant_email")
+        restaurant_password = x.validate_account_password("restaurant_password")
         hashed_password = generate_password_hash(restaurant_password)
         
         restaurant_pk = str(uuid.uuid4())
@@ -296,7 +298,6 @@ def signup_restaurant():
         restaurant_updated_at = 0
         restaurant_verified_at = 0
         account_verification_key = str(uuid.uuid4())
-        account_reset_password_key = str(uuid.uuid4())
 
         db, cursor = x.db()
 
@@ -311,11 +312,16 @@ def signup_restaurant():
             return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
 
 
-        q = 'INSERT INTO restaurants VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+        q = '''
+            INSERT INTO restaurants 
+            (restaurant_pk, restaurant_name, restaurant_email, restaurant_password, restaurant_created_at, 
+            restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, restaurant_verification_key)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            '''
         cursor.execute(q, (restaurant_pk, restaurant_name, restaurant_email, 
                             hashed_password, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
-                            restaurant_updated_at, restaurant_verified_at, account_verification_key, account_reset_password_key))
-        
+                            restaurant_updated_at, restaurant_verified_at, account_verification_key))
+
         
         x.send_verify_email(restaurant_email, account_verification_key)
 
@@ -344,8 +350,8 @@ def signup_restaurant():
 @app.post("/login")
 def login():
     try:
-        account_email = x.validate_user_email()
-        account_password = x.validate_user_password()
+        account_email = x.validate_account_email("user_email")
+        account_password = x.validate_account_password("user_password")
 
         db, cursor = x.db()
 
@@ -412,7 +418,7 @@ def login():
 
 ##############################
 @app.post("/forgot-password")
-def request_password_reset():
+def forgot_password():
     try:
         account_email = x.validate_account_email("user_email")  # Unified email validation for both users and restaurants
         account_reset_password_key = str(uuid.uuid4())
@@ -421,7 +427,7 @@ def request_password_reset():
 
         # Query the accounts view for both users and restaurants
         accounts_query = """
-            SELECT account_pk, account_email, account_role
+            SELECT account_pk, account_email, account_role, account_verified_at
             FROM accounts
             WHERE account_email = %s
         """
@@ -431,6 +437,10 @@ def request_password_reset():
         if not account:
             toast = render_template("___toast.html", message="Account not registered")
             return f"""<template mix-target="#toast">{toast}</template>""", 400
+
+        if not account["account_verified_at"]:
+            toast = render_template("___toast.html", message="Account not verified")
+            return f"""<template mix-target="#toast">{toast}</template>""", 403
 
         if account["account_role"] == "restaurant":
             update_query = """
@@ -448,18 +458,8 @@ def request_password_reset():
         cursor.execute(update_query, (account_reset_password_key, account_email))
         db.commit()
 
-        # Send the reset link via email
-        #x.send_reset_password_email(account_email, account_reset_password_key)
+        x.send_reset_password_email(account_email, account_reset_password_key)
 
-        #return redirect(url_for("view_login", message="Password reset link sent, please check your email"))
-        try:
-            x.send_reset_password_email(account_email, account_reset_password_key)
-        except Exception as email_error:
-            # Log the error and notify the user
-            ic(email_error)
-            return "Failed to send reset email. Please try again later.", 500
-
-        # Redirect to login page with success message
         return """<template mix-redirect="/login"></template>""", 201
 
     except Exception as ex:
@@ -476,6 +476,63 @@ def request_password_reset():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
+##############################
+@app.post("/reset-password/<reset_password_key>")
+@x.no_cache
+def reset_password(reset_password_key):
+    try:
+        reset_password_key = x.validate_uuid4(reset_password_key)
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        
+        if new_password != confirm_password:
+            toast = render_template("___toast.html", message="Passwords don't match")
+            return f"""<template mix-target="#toast">{toast}</template>""", 400
+        
+        hashed_password = generate_password_hash(new_password)
+
+        db, cursor = x.db()
+
+        # Try resetting password for users
+        user_query = """
+            UPDATE users
+            SET user_password = %s, user_updated_at = %s, user_reset_password_key = 0
+            WHERE user_reset_password_key = %s
+        """
+        cursor.execute(user_query, (hashed_password, int(time.time()), reset_password_key))
+
+        if cursor.rowcount == 1:  # Found and updated in 'users'
+            db.commit()
+            return """<template mix-redirect="/login"></template>""", 201
+
+        # Try resetting password for restaurants
+        restaurant_query = """
+            UPDATE restaurants
+            SET restaurant_password = %s, restaurant_updated_at = %s, restaurant_reset_password_key = 0
+            WHERE restaurant_reset_password_key = %s
+        """
+        cursor.execute(restaurant_query, (hashed_password, int(time.time()), reset_password_key))
+
+        if cursor.rowcount == 1:  # Found and updated in 'restaurants'
+            db.commit()
+            return """<template mix-redirect="/login"></template>""", 201
+
+        x.raise_custom_exception("Invalid or expired reset key", 400)
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): return ex.message, ex.code    
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "Database under maintenance", 500        
+        return "System under maintenance", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()  
 
 
 
@@ -522,9 +579,9 @@ def user_update():
         if not session.get("user"): x.raise_custom_exception("please login", 401)
 
         user_pk = session.get("user").get("user_pk")
-        user_name = x.validate_user_name()
-        user_last_name = x.validate_user_last_name()
-        user_email = x.validate_user_email()
+        user_name = x.validate_account_name("user_name")
+        user_last_name = x.validate_account_name("user_last_name")
+        user_email = x.validate_account_email("user_email")
 
         user_updated_at = int(time.time())
 
@@ -711,63 +768,6 @@ def verify_user(verification_key):
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()    
-
-
-##############################
-@app.post("/reset-password/<reset_password_key>")
-@x.no_cache
-def reset_password(reset_password_key):
-    try:
-        reset_password_key = x.validate_uuid4(reset_password_key)
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
-        
-        if new_password != confirm_password:
-            toast = render_template("___toast.html", message="Passwords don't match")
-            return f"""<template mix-target="#toast">{toast}</template>""", 400
-        
-        hashed_password = generate_password_hash(new_password)
-
-        db, cursor = x.db()
-
-        # Try resetting password for users
-        user_query = """
-            UPDATE users
-            SET user_password = %s, user_updated_at = %s, user_reset_password_key = 0
-            WHERE user_reset_password_key = %s
-        """
-        cursor.execute(user_query, (hashed_password, int(time.time()), reset_password_key))
-
-        if cursor.rowcount == 1:  # Found and updated in 'users'
-            db.commit()
-            return """<template mix-redirect="/login"></template>""", 201
-
-        # Try resetting password for restaurants
-        restaurant_query = """
-            UPDATE restaurants
-            SET restaurant_password = %s, restaurant_updated_at = %s, restaurant_reset_password_key = 0
-            WHERE restaurant_reset_password_key = %s
-        """
-        cursor.execute(restaurant_query, (hashed_password, int(time.time()), reset_password_key))
-
-        if cursor.rowcount == 1:  # Found and updated in 'restaurants'
-            db.commit()
-            return """<template mix-redirect="/login"></template>""", 201
-
-        x.raise_custom_exception("Invalid or expired reset key", 400)
-
-    except Exception as ex:
-        ic(ex)
-        if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): return ex.message, ex.code    
-        if isinstance(ex, x.mysql.connector.Error):
-            ic(ex)
-            return "Database under maintenance", 500        
-        return "System under maintenance", 500  
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()    
-
 
 
 
