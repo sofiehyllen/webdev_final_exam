@@ -34,7 +34,6 @@ def view_test_set_redis():
     redis_port = 6379
     redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)    
     redis_client.set("name", "Santiago", ex=10)
-    # name = redis_client.get("name")
     return "name saved"
 
 @app.get("/test-get-redis")
