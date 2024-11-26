@@ -1,0 +1,27 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full">
+    <h1>All Users</h1>
+    <table class="mx-auto">
+        <tr>
+            <th class="w-40">Name</th>
+            <th class="w-70">Email</th>
+            <th class="w-30">Actions</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.user_name }}</td>
+            <td>{{ user.user_email }}</td>
+            <td>
+                {% if user.user_blocked_at == 0 %}
+                  {% include "___btn_block_user.html" %}
+                {% else %}
+                  {% include "___btn_unblock_user.html" %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</main>
+
+{% include "_bottom.html" %}
