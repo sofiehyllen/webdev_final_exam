@@ -201,7 +201,7 @@ def view_admin_users():
         
         # Connect to DB and fetch users
         db, cursor = x.db()
-        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at FROM accounts'
+        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_role FROM accounts'
         cursor.execute(q)
         accounts = cursor.fetchall()
 
