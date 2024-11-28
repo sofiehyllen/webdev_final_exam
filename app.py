@@ -619,11 +619,9 @@ def reset_password(reset_password_key):
 @app.post("/items")
 def create_item():
     try:
-        # TODO: validate item_title, item_description, item_price
         item_title = x.validate_account_name("item_title")
         item_description = x.validate_item_description()
         item_price = x.validate_item_price()
-        file, item_image_url = x.validate_item_image()
         
         item_pk = str(uuid.uuid4())
         item_created_at = int(time.time())
@@ -632,9 +630,6 @@ def create_item():
         item_updated_at = 0
         item_restaurant_fk = session.get("account").get("account_pk")
 
-        # Save the image
-        image_path = os.path.join(x.UPLOAD_ITEM_FOLDER, item_image_url)
-        file.save(image_path)
 
         # TODO: raise toast if price is not correct
 
@@ -646,26 +641,48 @@ def create_item():
                 item_title, 
                 item_description, 
                 item_price, 
-                item_image_url, 
                 item_created_at, 
                 item_deleted_at, 
                 item_blocked_at, 
                 item_updated_at,
                 item_restaurant_fk
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         cursor.execute(q, (
             item_pk, 
             item_title, 
             item_description, 
             item_price, 
-            item_image_url, 
             item_created_at, 
             item_deleted_at, 
             item_blocked_at, 
             item_updated_at,
             item_restaurant_fk
         ))
+        
+        files = request.files.getlist("item_image_name")
+        #TODO: choose 1 file at a time when uploading
+        for file in files:
+            file, item_image_name = x.validate_item_image() 
+
+            # Save the image to the server
+            image_path = os.path.join(x.UPLOAD_ITEM_FOLDER, item_image_name)
+            file.save(image_path)
+
+            item_image_pk = str(uuid.uuid4())
+
+            image_q = '''
+                INSERT INTO item_images (
+                    item_image_pk, 
+                    item_image_item_fk, 
+                    item_image_name
+                ) VALUES (%s, %s, %s)
+            '''
+            cursor.execute(image_q, (
+                item_image_pk,
+                item_pk, 
+                item_image_name  
+            ))
 
         db.commit()
 
