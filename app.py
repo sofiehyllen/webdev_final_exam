@@ -654,11 +654,22 @@ def user_block(user_pk):
 
         db, cursor = x.db()
 
+        q = 'SELECT user_email FROM users WHERE user_pk = %s'
+        cursor.execute(q, (user_pk,))
+        user = cursor.fetchone()
+        if not user: 
+            x.raise_custom_exception("user not found", 404)
+
+        user_email = user["user_email"]
+
         q = 'UPDATE users SET user_blocked_at = %s WHERE user_pk = %s'
         cursor.execute(q, (user_blocked_at, user_pk))
         if cursor.rowcount != 1: x.raise_custom_exception("cannot block user", 400)
 
         db.commit()
+
+        x.send_block_email(user_email)
+
         return f"""<template mix-redirect="/admin/users"></template>"""
     
     except Exception as ex:
