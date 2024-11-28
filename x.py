@@ -160,8 +160,8 @@ def validate_item_price():
 
 ##############################
 def validate_item_image():
-    if 'item_image_url' not in request.files: raise_custom_exception("item_file missing", 400)
-    file = request.files.get("item_image_url", "")
+    if 'item_image_name' not in request.files: raise_custom_exception("item_file missing", 400)
+    file = request.files.get("item_image_name", "")
     if file.filename == "": raise_custom_exception("item_file name invalid", 400)
 
     if file:
