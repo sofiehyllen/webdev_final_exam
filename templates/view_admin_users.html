@@ -8,20 +8,20 @@
             <th class="w-70">Email</th>
             <th class="w-30">Actions</th>
         </tr>
-        {% for user in users %}
+        {% for account in accounts %}
         <tr>
-            <td>{{ user.user_name }}</td>
-            <td>{{ user.user_email }}</td>
+            <td>{{ account.account_name }}</td>
+            <td>{{ account.account_email }}</td>
             <td>
-                {% if not user.user_blocked_at %}
-                <form id="block-user-{{ user.user_pk }}">
-                    <button mix-put="/users/block/{{ user.user_pk }}" mix-data="#block-user-{{ user.user_pk }}">
+                {% if not account.account_blocked_at %}
+                <form id="block-user-{{ account.account_pk }}">
+                    <button mix-put="/users/block/{{ account.account_pk }}" mix-data="#block-user-{{ account.account_pk }}">
                         Block
                     </button>
                 </form>
                 {% else %}
-                <form id="unblock-user-{{ user.user_pk }}">
-                    <button mix-put="/users/unblock/{{ user.user_pk }}" mix-data="#unblock-user-{{ user.user_pk }}">
+                <form id="unblock-user-{{ account.account_pk }}">
+                    <button mix-put="/users/unblock/{{ account.account_pk }}" mix-data="#unblock-user-{{ account.account_pk }}">
                         Unblock
                     </button>
                 </form>
