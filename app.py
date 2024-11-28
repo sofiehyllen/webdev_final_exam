@@ -113,6 +113,32 @@ def view_customer():
         return redirect(url_for("view_choose_role"))
     return render_template("view_customer.html", user=user)
 
+##############################
+@app.get("/customer/items")
+@x.no_cache
+def view_customer_items():
+    try:
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+        user = session.get("account")
+        if len(user.get("roles", "")) > 1:
+            return redirect(url_for("view_choose_role"))
+
+        db, cursor = x.db()
+        q = 'SELECT * FROM items'
+        cursor.execute(q)
+        items = cursor.fetchall()
+
+        return render_template("view_customer_items.html", user=user, items=items)
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 ##############################
 @app.get("/partner")
@@ -123,6 +149,8 @@ def view_partner():
     user = session.get("account")
     if len(user.get("roles", "")) > 1:
         return redirect(url_for("view_choose_role"))
+    if not "partner" in user.get("roles", ""):
+        return redirect(url_for("view_login"))
     return render_template("view_partner.html", user=user)
 
 
@@ -156,8 +184,22 @@ def view_restaurant():
     user = session.get("account")
     if len(user.get("roles", "")) > 1:
         return redirect(url_for("view_choose_role"))
+    if not "restaurant" in user.get("roles", ""):
+        return redirect(url_for("view_login"))    
     return render_template("view_restaurant.html", user=user)
 
+
+@app.get("/restaurant/create-item")
+@x.no_cache
+def view_restaurant_create_item():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    if len(user.get("roles", "")) > 1:
+        return redirect(url_for("view_choose_role"))
+    if not "restaurant" in user.get("roles", ""):
+        return redirect(url_for("view_login"))  
+    return render_template("view_restaurant_create_item.html", user=user, x=x)
 
 ##############################
 @app.get("/choose-role")
@@ -578,13 +620,60 @@ def reset_password(reset_password_key):
 def create_item():
     try:
         # TODO: validate item_title, item_description, item_price
-        file, item_image_name = x.validate_item_image()
+        item_title = x.validate_account_name("item_title")
+        item_description = x.validate_item_description()
+        item_price = x.validate_item_price()
+        file, item_image_url = x.validate_item_image()
+        
+        item_pk = str(uuid.uuid4())
+        item_created_at = int(time.time())
+        item_deleted_at = 0
+        item_blocked_at = 0
+        item_updated_at = 0
+        item_restaurant_fk = session.get("account").get("account_pk")
 
         # Save the image
-        file.save(os.path.join(x.UPLOAD_ITEM_FOLDER, item_image_name))
-        # TODO: if saving the image went wrong, then rollback by going to the exception
-        # TODO: Success, commit
-        return item_image_name
+        image_path = os.path.join(x.UPLOAD_ITEM_FOLDER, item_image_url)
+        file.save(image_path)
+
+        # TODO: raise toast if price is not correct
+
+        db, cursor = x.db()
+
+        q = '''
+            INSERT INTO items (
+                item_pk, 
+                item_title, 
+                item_description, 
+                item_price, 
+                item_image_url, 
+                item_created_at, 
+                item_deleted_at, 
+                item_blocked_at, 
+                item_updated_at,
+                item_restaurant_fk
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        cursor.execute(q, (
+            item_pk, 
+            item_title, 
+            item_description, 
+            item_price, 
+            item_image_url, 
+            item_created_at, 
+            item_deleted_at, 
+            item_blocked_at, 
+            item_updated_at,
+            item_restaurant_fk
+        ))
+
+        db.commit()
+
+        #TODO: clear form when item created
+
+        toast = render_template("___toast.html", message="Item has been created")
+        return f"""<template mix-target="#toast" mix-bottom>{toast}</template>"""
+    
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()

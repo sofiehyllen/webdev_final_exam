@@ -1,0 +1,18 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full">
+    <h1>All Items</h1>
+
+    {% for item in items %}
+    <table>
+        <tr>
+            <td>{{ item.item_title}}</td>
+            <td>{{ item.item_description}}</td>
+            <td>{{ item.item_price}}</td>
+            <td><img src="{{ item.item_image_url}}" alt="image" /></td>
+        </tr>
+    </table>
+    {% endfor %}
+</main>
+
+{% include "_bottom.html" %}
