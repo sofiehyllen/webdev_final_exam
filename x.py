@@ -78,16 +78,25 @@ def allow_origin(origin="*"):
 NAME_MIN = 2
 NAME_MAX = 50
 NAME_REGEX = f"^.{{{NAME_MIN},{NAME_MAX}}}$"
+
+DESCRIPTION_MAX = 255
+DESCRIPTION_REGEX = f"^.{{{NAME_MIN},{DESCRIPTION_MAX}}}$"
+
 PASSWORD_MIN = 8
 PASSWORD_MAX = 50
 PASSWORD_REGEX = f"^.{{{PASSWORD_MIN},{PASSWORD_MAX}}}$"
+
+PRICE_MIN = 0
+PRICE_MAX = 9999.99
+PRICE_REGEX = "^\d{1,4}(\.\d{1,2})?$"
 
 EMAIL_REGEX = "^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
 UUID4_REGEX = "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 
 USER_ROLES = ["customer", "partner"]
-UPLOAD_ITEM_FOLDER = './images'
-ALLOWED_ITEM_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+UPLOAD_ITEM_FOLDER = './item_images'
+ALLOWED_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
 ##############################
@@ -133,21 +142,37 @@ def validate_account_password(form_field):
     return account_password
 
 
+##############################
+def validate_item_description():
+    error = f"description {NAME_MIN} to {DESCRIPTION_MAX} characters"
+    item_description = request.form.get("item_description", "").strip()
+    if not re.match(DESCRIPTION_REGEX, item_description): raise_custom_exception(error, 400)
+    return item_description
+
 
 ##############################
+def validate_item_price():
+    error = f"price {PRICE_MIN} to {PRICE_MAX}"
+    item_price = request.form.get("item_price", "").strip()
+    if not re.match(PRICE_REGEX, item_price): raise_custom_exception(error, 400)
+    return item_price
 
+
+##############################
 def validate_item_image():
-    if 'item_file' not in request.files: raise_custom_exception("item_file missing", 400)
-    file = request.files.get("item_file", "")
+    if 'item_image_url' not in request.files: raise_custom_exception("item_file missing", 400)
+    file = request.files.get("item_image_url", "")
     if file.filename == "": raise_custom_exception("item_file name invalid", 400)
 
     if file:
         ic(file.filename)
         file_extension = os.path.splitext(file.filename)[1][1:]
         ic(file_extension)
-        if file_extension not in ALLOWED_ITEM_FILE_EXTENSIONS: raise_custom_exception("item_file invalid extension", 400)
+        if file_extension not in ALLOWED_FILE_EXTENSIONS: raise_custom_exception("item_file invalid extension", 400)
         filename = str(uuid.uuid4()) + file_extension
         return file, filename 
+
+
 
 ##############################
 def send_verify_email(to_email, account_verification_key):
