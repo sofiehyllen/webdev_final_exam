@@ -201,11 +201,11 @@ def view_admin_users():
         
         # Connect to DB and fetch users
         db, cursor = x.db()
-        q = 'SELECT user_pk, user_name, user_email, user_blocked_at, user_deleted_at FROM users'
+        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at FROM accounts'
         cursor.execute(q)
-        users = cursor.fetchall()
+        accounts = cursor.fetchall()
 
-        return render_template('view_admin_users.html', users=users)
+        return render_template('view_admin_users.html', accounts=accounts)
 
     except Exception as ex:
         ic(ex)
@@ -645,30 +645,42 @@ def user_update():
 
 
 ##############################
-@app.put("/users/block/<user_pk>")
-def user_block(user_pk):
+@app.put("/users/block/<account_pk>")
+def user_block(account_pk):
     try:        
 
-        user_pk = x.validate_uuid4(user_pk)
-        user_blocked_at = int(time.time())
+        account_pk = x.validate_uuid4(account_pk)
+        account_blocked_at = int(time.time())
 
         db, cursor = x.db()
 
-        q = 'SELECT user_email FROM users WHERE user_pk = %s'
-        cursor.execute(q, (user_pk,))
-        user = cursor.fetchone()
-        if not user: 
+        q = 'SELECT account_email FROM accounts WHERE account_pk = %s'
+        cursor.execute(q, (account_pk,))
+        account = cursor.fetchone()
+        if not account: 
             x.raise_custom_exception("user not found", 404)
 
-        user_email = user["user_email"]
+        account_email = account["account_email"]
 
-        q = 'UPDATE users SET user_blocked_at = %s WHERE user_pk = %s'
-        cursor.execute(q, (user_blocked_at, user_pk))
-        if cursor.rowcount != 1: x.raise_custom_exception("cannot block user", 400)
+        q = '''
+            UPDATE users 
+            SET user_blocked_at = %s 
+            WHERE user_pk = %s
+        '''
+        cursor.execute(q, (account_blocked_at, account_pk))
+        if cursor.rowcount != 1: 
+            q = '''
+                UPDATE restaurants 
+                SET restaurant_blocked_at = %s 
+                WHERE restaurant_pk = %s
+            '''
+            cursor.execute(q, (account_blocked_at, account_pk))
+            if cursor.rowcount != 1:
+                x.raise_custom_exception("cannot block account", 400)
 
         db.commit()
 
-        x.send_block_email(user_email)
+        x.send_block_email(account_email)
 
         return f"""<template mix-redirect="/admin/users"></template>"""
     
@@ -687,17 +699,33 @@ def user_block(user_pk):
 
 
 ##############################
-@app.put("/users/unblock/<user_pk>")
-def user_unblock(user_pk):
+@app.put("/users/unblock/<account_pk>")
+def user_unblock(account_pk):
     try:
 
-        user_pk = x.validate_uuid4(user_pk)
-        user_blocked_at = 0
+        account_pk = x.validate_uuid4(account_pk)
+        account_blocked_at = 0
 
         db, cursor = x.db()
-        q = 'UPDATE users SET user_blocked_at = %s WHERE user_pk = %s'
-        cursor.execute(q, (user_blocked_at, user_pk))
-        if cursor.rowcount != 1: x.raise_custom_exception("cannot unblock user", 400)
+
+        q = '''
+            UPDATE users 
+            SET user_blocked_at = %s 
+            WHERE user_pk = %s
+        '''
+        cursor.execute(q, (account_blocked_at, account_pk))
+        
+        # If no rows are affected, try the 'restaurants' table
+        if cursor.rowcount != 1:
+            q = '''
+                UPDATE restaurants 
+                SET restaurant_blocked_at = %s 
+                WHERE restaurant_pk = %s
+            '''
+            cursor.execute(q, (account_blocked_at, account_pk))
+            if cursor.rowcount != 1:
+                x.raise_custom_exception("cannot unblock account", 400)
+        
         db.commit()
 
         return f"""<template mix-redirect="/admin/users"></template>"""    
