@@ -1,34 +1,79 @@
 {% include "_top_logged.html" %}
 
 <main class="w-full">
-    <h1>All Users</h1>
+    <h1>All Accounts</h1>
+    <!-- Table for Customers and Partners -->
+    <h2>Customers & Partners</h2>
     <table class="mx-auto">
-        <tr>
+        <tr class="d-block pa-5">
             <th class="w-40">Name</th>
             <th class="w-70">Email</th>
             <th class="w-30">Actions</th>
         </tr>
-        {% for account in accounts %}
-        <tr>
-            <td>{{ account.account_name }}</td>
-            <td>{{ account.account_email }}</td>
-            <td>
+        {% for account in accounts %} {% if account.account_role in ['customer', 'partner'] %}
+        <tr class="d-block pa-5" odd="bg-c-body:-10">
+            <td class="w-40">{{ account.account_name }}</td>
+            <td class="w-70">{{ account.account_email }}</td>
+            <td class="w-30">
                 {% if not account.account_blocked_at %}
                 <form id="block-user-{{ account.account_pk }}">
-                    <button mix-put="/users/block/{{ account.account_pk }}" mix-data="#block-user-{{ account.account_pk }}">
+                    <button
+                        class="cursor-pointer"
+                        mix-put="/users/block/{{ account.account_pk }}"
+                        mix-data="#block-user-{{ account.account_pk }}">
                         Block
                     </button>
                 </form>
                 {% else %}
                 <form id="unblock-user-{{ account.account_pk }}">
-                    <button mix-put="/users/unblock/{{ account.account_pk }}" mix-data="#unblock-user-{{ account.account_pk }}">
+                    <button
+                        class="cursor-pointer"
+                        mix-put="/users/unblock/{{ account.account_pk }}"
+                        mix-data="#unblock-user-{{ account.account_pk }}">
                         Unblock
                     </button>
                 </form>
                 {% endif %}
             </td>
         </tr>
-        {% endfor %}
+        {% endif %} {% endfor %}
+    </table>
+
+    <!-- Table for Restaurants -->
+    <h2>Restaurants</h2>
+    <table class="mx-auto">
+        <tr class="d-block pa-5">
+            <th class="w-40">Name</th>
+            <th class="w-70">Email</th>
+            <th class="w-30">Actions</th>
+        </tr>
+        {% for account in accounts %} {% if account.account_role == 'restaurant' %}
+        <tr class="d-block pa-5" odd="bg-c-body:-10">
+            <td class="w-40">{{ account.account_name }}</td>
+            <td class="w-70">{{ account.account_email }}</td>
+            <td class="w-30">
+                {% if not account.account_blocked_at %}
+                <form id="block-user-{{ account.account_pk }}">
+                    <button
+                        class="cursor-pointer"
+                        mix-put="/users/block/{{ account.account_pk }}"
+                        mix-data="#block-user-{{ account.account_pk }}">
+                        Block
+                    </button>
+                </form>
+                {% else %}
+                <form id="unblock-user-{{ account.account_pk }}">
+                    <button
+                        class="cursor-pointer"
+                        mix-put="/users/unblock/{{ account.account_pk }}"
+                        mix-data="#unblock-user-{{ account.account_pk }}">
+                        Unblock
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %} {% endfor %}
     </table>
 </main>
 
