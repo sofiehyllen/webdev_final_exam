@@ -36,9 +36,10 @@
                 <span>Image</span>
             </label>
             <input type="file" name="item_image_name" id="item_image_name" accept=".png, .jpg, .jpeg, .gif" multiple />
+            <pre id="fileList"></pre>
         </div>
 
-        <button class="cursor-pointer" mix-post="/items" mix-data="#frm_create_item">Create item</button>
+        <button type="submit" class="cursor-pointer" mix-post="/items" mix-data="#frm_create_item">Create item</button>
     </form>
 </main>
 

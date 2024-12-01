@@ -659,11 +659,13 @@ def create_item():
             item_updated_at,
             item_restaurant_fk
         ))
+
+        #TODO: add multiple files one at a time
+
+        valid_files = x.validate_item_image() 
         
-        files = request.files.getlist("item_image_name")
-        #TODO: choose 1 file at a time when uploading
-        for file in files:
-            file, item_image_name = x.validate_item_image() 
+        for file, item_image_name in valid_files:
+            print(request.files.getlist("item_image_name"))
 
             # Save the image to the server
             image_path = os.path.join(x.UPLOAD_ITEM_FOLDER, item_image_name)
