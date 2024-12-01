@@ -160,17 +160,40 @@ def validate_item_price():
 
 ##############################
 def validate_item_image():
-    if 'item_image_name' not in request.files: raise_custom_exception("item_file missing", 400)
-    file = request.files.get("item_image_name", "")
-    if file.filename == "": raise_custom_exception("item_file name invalid", 400)
+    if 'item_image_name' not in request.files: 
+        raise_custom_exception("item_file missing", 400)
 
-    if file:
-        ic(file.filename)
+    files = request.files.getlist("item_image_name")
+    if not files:
+        raise_custom_exception("item_file name invalid", 400)
+
+    valid_files = []
+
+    for file in files:
+        if file.filename == "": 
+            raise_custom_exception("item_file name invalid", 400)
+
+        # Validate file extension
         file_extension = os.path.splitext(file.filename)[1][1:]
-        ic(file_extension)
-        if file_extension not in ALLOWED_FILE_EXTENSIONS: raise_custom_exception("item_file invalid extension", 400)
-        filename = str(uuid.uuid4()) + file_extension
-        return file, filename 
+        if file_extension not in ALLOWED_FILE_EXTENSIONS:
+            raise_custom_exception("item_file invalid extension", 400)
+
+        # Generate a unique filename
+        filename = f"{uuid.uuid4()}.{file_extension}"
+        valid_files.append((file, filename))  # Store the valid file and its new name
+
+    if not valid_files:
+        raise_custom_exception("No valid files uploaded", 400)
+
+    return valid_files 
+
+    # if file:
+    #     ic(file.filename)
+    #     file_extension = os.path.splitext(file.filename)[1][1:]
+    #     ic(file_extension)
+    #     if file_extension not in ALLOWED_FILE_EXTENSIONS: raise_custom_exception("item_file invalid extension", 400)
+    #     filename = f"{uuid.uuid4()}.{file_extension}"
+    #     return file, filename 
 
 
 
