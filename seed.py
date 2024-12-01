@@ -143,7 +143,7 @@ try:
         `users`.`user_updated_at` AS `account_updated_at`, 
         `users`.`user_verified_at` AS `account_verified_at`, 
         `users`.`user_verification_key` AS `account_verification_key`, 
-        GROUP_CONCAT(`roles`.`role_name` SEPARATOR ',') AS `account_role`, 
+        GROUP_CONCAT(`roles`.`role_name` SEPARATOR ',') AS `account_roles`, 
         'user' AS `entity_type` 
     FROM 
         `users`
@@ -167,7 +167,7 @@ try:
         `restaurants`.`restaurant_updated_at` AS `account_updated_at`,
         `restaurants`.`restaurant_verified_at` AS `account_verified_at`,
         `restaurants`.`restaurant_verification_key` AS `account_verification_key`,
-        'restaurant' AS `account_role`,
+        'restaurant' AS `account_roles`,
         'restaurant' AS `entity_type`
     FROM 
         `restaurants`;
