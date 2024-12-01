@@ -109,8 +109,8 @@ def view_customer():
     if not session.get("account", ""): 
         return redirect(url_for("view_login"))
     user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
+    # if len(user.get("roles", "")) > 1:
+    #     return redirect(url_for("view_choose_role"))
     return render_template("view_customer.html", user=user)
 
 ##############################
@@ -147,8 +147,8 @@ def view_partner():
     if not session.get("account", ""): 
         return redirect(url_for("view_login"))
     user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
+    # if len(user.get("roles", "")) > 1:
+    #     return redirect(url_for("view_choose_role"))
     if not "partner" in user.get("roles", ""):
         return redirect(url_for("view_login"))
     return render_template("view_partner.html", user=user)
@@ -243,7 +243,7 @@ def view_admin_users():
         
         # Connect to DB and fetch users
         db, cursor = x.db()
-        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_role FROM accounts'
+        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_roles FROM accounts'
         cursor.execute(q)
         accounts = cursor.fetchall()
 
@@ -437,7 +437,7 @@ def login():
         # Query the accounts view to check both users and restaurants
         query = """
             SELECT account_pk, account_name, account_name, account_email,
-                    account_password, account_verified_at, account_role
+                    account_password, account_verified_at, account_roles
             FROM accounts
             WHERE account_email = %s
         """
@@ -460,7 +460,7 @@ def login():
             return f"""<template mix-target="#toast">{toast}</template>""", 403
 
         # Process roles
-        roles = [row["account_role"] for row in rows]
+        roles = rows[0]["account_roles"].split(', ')
 
         account = {
             "account_pk": rows[0]["account_pk"],
@@ -506,7 +506,7 @@ def forgot_password():
 
         # Query the accounts view for both users and restaurants
         accounts_query = """
-            SELECT account_pk, account_email, account_role, account_verified_at
+            SELECT account_pk, account_email, account_roles, account_verified_at
             FROM accounts
             WHERE account_email = %s
         """
@@ -521,7 +521,7 @@ def forgot_password():
             toast = render_template("___toast.html", message="Account not verified")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
 
-        if account["account_role"] == "restaurant":
+        if account["account_roles"] == "restaurant":
             update_query = """
                 UPDATE restaurants
                 SET restaurant_reset_password_key = %s

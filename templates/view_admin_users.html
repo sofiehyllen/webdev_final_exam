@@ -10,7 +10,7 @@
             <th class="w-70">Email</th>
             <th class="w-30">Actions</th>
         </tr>
-        {% for account in accounts %} {% if account.account_role in ['customer', 'partner'] %}
+        {% for account in accounts %} {% if account.account_roles in ['customer', 'partner'] %}
         <tr class="d-block pa-5" odd="bg-c-body:-10">
             <td class="w-40">{{ account.account_name }}</td>
             <td class="w-70">{{ account.account_email }}</td>
@@ -47,7 +47,7 @@
             <th class="w-70">Email</th>
             <th class="w-30">Actions</th>
         </tr>
-        {% for account in accounts %} {% if account.account_role == 'restaurant' %}
+        {% for account in accounts %} {% if account.account_roles == 'restaurant' %}
         <tr class="d-block pa-5" odd="bg-c-body:-10">
             <td class="w-40">{{ account.account_name }}</td>
             <td class="w-70">{{ account.account_email }}</td>
