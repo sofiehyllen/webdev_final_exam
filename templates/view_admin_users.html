@@ -35,16 +35,16 @@
                 </form>
                 {% endif %}
             </td>
-            <td>
+            <td id="delete-user-btn">
                 {% if account.account_deleted_at == 0 %}
                 <button
                     class="bg-none text-c-body px-3 py-1 rounded-sm h-10 w-10 cursor-pointer"
                     title="Delete User"
-                    mix-get="/users/delete/{{account['account_pk']}}">
+                    mix-delete="/users/delete/{{account['account_pk']}}">
                     🗑️
                 </button>
                 {% else %}
-                <div class="text-c-white d-flex a-items-center">deleted at: {{ account.account_deleted_at }}</div>
+                <div class="d-flex a-items-center">Deleted at: {{ account.account_deleted_at }}</div>
                 {% endif %}
             </td>
         </tr>
@@ -84,16 +84,16 @@
                 </form>
                 {% endif %}
             </td>
-            <td>
+            <td id="delete-user-btn">
                 {% if account.account_deleted_at == 0 %}
                 <button
                     class="bg-none text-c-body px-3 py-1 rounded-sm h-10 w-10 cursor-pointer"
                     title="Delete User"
-                    mix-get="/users/delete/{{account['account_pk']}}">
+                    mix-delete="/users/delete/{{account['account_pk']}}">
                     🗑️
                 </button>
                 {% else %}
-                <p class="d-flex a-items-center">Deleted attt: {{ account.account_deleted_at }}</p>
+                <p class="d-flex a-items-center">Deleted at: {{ account.account_deleted_at }}</p>
                 {% endif %}
             </td>
         </tr>
