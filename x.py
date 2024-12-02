@@ -171,12 +171,12 @@ def validate_item_image():
 
     for file in files:
         if file.filename == "": 
-            raise_custom_exception("item_file name invalid", 400)
+            raise_custom_exception("File missing", 400)
 
         # Validate file extension
         file_extension = os.path.splitext(file.filename)[1][1:]
         if file_extension not in ALLOWED_FILE_EXTENSIONS:
-            raise_custom_exception("item_file invalid extension", 400)
+            raise_custom_exception("File invalid type", 400)
 
         # Generate a unique filename
         filename = f"{uuid.uuid4()}.{file_extension}"

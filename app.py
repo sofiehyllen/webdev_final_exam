@@ -85,7 +85,6 @@ def view_signup_restaurant():
 @app.get("/login")
 @x.no_cache
 def view_login():  
-    # ic("#"*20, "VIEW_LOGIN")
     ic(session)
     # print(session, flush=True)  
     if session.get("account"):
@@ -165,15 +164,6 @@ def view_admin():
         return redirect(url_for("view_login"))
     return render_template("view_admin.html")
 
-# @app.get("/admin/users")
-# @x.no_cache
-# def view_admin_users():
-#     if not session.get("account", ""): 
-#         return redirect(url_for("view_login"))
-#     user = session.get("account")
-#     if not "admin" in user.get("roles", ""):
-#         return redirect(url_for("view_login"))
-#     return render_template("view_admin_users.html", users=users)
 
 ##############################
 @app.get("/restaurant")
@@ -258,6 +248,19 @@ def view_admin_users():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+@app.get("/edit-profile")
+def view_edit_profile():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    return render_template("view_edit_profile.html", user=user, x=x)
+
+@app.get("/edit-restaurant-profile")
+def view_edit_restaurant_profile():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    return render_template("view_edit_restaurant_profile.html", user=user, x=x)
 ##############################
 ##############################
 ##############################
@@ -436,9 +439,11 @@ def login():
 
         # Query the accounts view to check both users and restaurants
         query = """
-            SELECT account_pk, account_name, account_name, account_email,
-                    account_password, account_verified_at, account_roles
+            SELECT account_pk, account_name, account_email,
+            account_password, account_verified_at, account_roles,
+            user_last_name
             FROM accounts
+            LEFT JOIN users ON accounts.account_pk = users.user_pk
             WHERE account_email = %s
         """
         cursor.execute(query, (account_email,))
@@ -458,13 +463,15 @@ def login():
         if not rows[0]["account_verified_at"]:
             toast = render_template("___toast.html", message="Account not verified")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
-
+        
+        ic(rows[0])
         # Process roles
         roles = rows[0]["account_roles"].split(', ')
 
         account = {
             "account_pk": rows[0]["account_pk"],
             "account_name": rows[0]["account_name"],
+            "account_last_name": rows[0].get("user_last_name"),
             "account_email": rows[0]["account_email"],
             "roles": roles,
         }
@@ -721,35 +728,166 @@ def _________PUT_________(): pass
 @app.put("/users")
 def user_update():
     try:
-        if not session.get("user"): x.raise_custom_exception("please login", 401)
-
-        user_pk = session.get("user").get("user_pk")
+        user_pk = session.get("account").get("account_pk")
         user_name = x.validate_account_name("user_name")
         user_last_name = x.validate_account_name("user_last_name")
         user_email = x.validate_account_email("user_email")
-
         user_updated_at = int(time.time())
 
         db, cursor = x.db()
-        q = """ UPDATE users
-                SET user_name = %s, user_last_name = %s, user_email = %s, user_updated_at = %s
-                WHERE user_pk = %s
+        
+        # Fetch the current user info
+        cursor.execute(
+            """ SELECT user_name, user_last_name, user_email, user_verified_at, user_verification_key 
+                FROM users 
+                WHERE user_pk = %s""", (user_pk,))
+        current_user = cursor.fetchone()
+        if not current_user:
+            x.raise_custom_exception("user not found", 404)
+
+        if current_user["user_email"] != user_email:
+            q_check_email = """
+            SELECT 'exists' FROM accounts WHERE account_email = %s
             """
-        cursor.execute(q, (user_name, user_last_name, user_email, user_updated_at, user_pk))
-        if cursor.rowcount != 1: x.raise_custom_exception("cannot update user", 401)
+            cursor.execute(q_check_email, (user_email,))
+            result = cursor.fetchone()
+            
+            if result:
+                toast = render_template("___toast.html", message="Email not available")
+                return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+
+        if (
+            current_user["user_name"] == user_name and
+            current_user["user_last_name"] == user_last_name and
+            current_user["user_email"] == user_email ):
+            
+            toast = render_template("___toast.html", message="No changes made")
+            return f"""<template mix-target="#toast">{toast}</template>"""
+        
+        user_verified_at = 0 if current_user["user_email"] != user_email else current_user["user_verified_at"]
+
+        cursor.execute(
+            """UPDATE users SET user_name = %s, user_last_name = %s, 
+            user_email = %s, user_updated_at = %s, user_verified_at = %s 
+            WHERE user_pk = %s""",
+            (user_name, user_last_name, user_email, user_updated_at, user_verified_at, user_pk))
+        if cursor.rowcount != 1: 
+            x.raise_custom_exception("cannot update user", 401)
+
         db.commit()
-        return """<template>user updated</template>"""
+
+        session["account"].update({
+            "account_name": user_name, 
+            "account_last_name": user_last_name, 
+            "account_email": user_email
+        })
+
+        if current_user["user_email"] != user_email:
+            x.send_verify_email(user_email, current_user["user_verification_key"])
+            toast = render_template("___toast.html", message="Email send to verify your new email address")
+        else:
+            toast = render_template("___toast.html", message="Profile has been updated")
+        return f"""<template mix-target="#toast" mix-bottom>{toast}</template>"""
+        
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code
+        
         if isinstance(ex, x.mysql.connector.Error):
-            if "users.user_email" in str(ex): return "<template>email not available</template>", 400
-            return "<template>System upgrating</template>", 500        
+            if "users.user_email" in str(ex): 
+                return "<template>email not available</template>", 400
+            return "<template>System upgrading</template>", 500        
+        
         return "<template>System under maintenance</template>", 500    
+
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
+##############################
+@app.put("/restaurants")
+def restaurant_update():
+        try:
+            restaurant_pk = session.get("account").get("account_pk")
+            restaurant_name = x.validate_account_name("user_name")
+            restaurant_email = x.validate_account_email("user_email")
+            restaurant_updated_at = int(time.time())
+
+            db, cursor = x.db()
+
+            cursor.execute(
+                """ SELECT restaurant_name, restaurant_email, restaurant_verified_at, restaurant_verification_key 
+                    FROM restaurants 
+                    WHERE restaurant_pk = %s""", (restaurant_pk,))
+            current_user = cursor.fetchone()
+            if not current_user:
+                x.raise_custom_exception("user not found", 404)
+    
+            if current_user["restaurant_email"] != restaurant_email:
+                q_check_email = """
+                SELECT 'exists' FROM accounts WHERE account_email = %s
+                """
+                cursor.execute(q_check_email, (restaurant_email,))
+                result = cursor.fetchone()
+            
+                if result:
+                    toast = render_template("___toast.html", message="Email not available")
+                    return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+                
+            if (
+                current_user["restaurant_name"] == restaurant_name and
+                current_user["restaurant_email"] == restaurant_email ):
+                
+                toast = render_template("___toast.html", message="No changes made")
+                return f"""<template mix-target="#toast">{toast}</template>"""
+            
+            restaurant_verified_at = 0 if current_user["restaurant_email"] != restaurant_email else current_user["restaurant_verified_at"]
+
+            cursor.execute(
+                """UPDATE restaurants SET restaurant_name = %s, restaurant_email = %s, 
+                    restaurant_updated_at = %s, restaurant_verified_at = %s 
+                WHERE restaurant_pk = %s""",
+                (restaurant_name, restaurant_email, restaurant_updated_at, restaurant_verified_at, restaurant_pk))
+            if cursor.rowcount != 1: 
+                x.raise_custom_exception("cannot update user", 401)
+
+            db.commit()
+
+            session["account"].update({
+                "account_name": restaurant_name, 
+                "account_email": restaurant_email
+            })
+
+            if current_user["restaurant_email"] != restaurant_email:
+                x.send_verify_email(restaurant_email, current_user["restaurant_verification_key"])
+                toast = render_template("___toast.html", message="Email send to verify your new email address")
+            else:
+                toast = render_template("___toast.html", message="Profile has been updated")
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>"""
+            
+        
+        except Exception as ex:
+            ic(ex)
+            if "db" in locals(): db.rollback()
+            if isinstance(ex, x.CustomException):
+                return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code
+            
+            if isinstance(ex, x.mysql.connector.Error):
+                ic(ex)
+                if "users.user_email" in str(ex):
+                    return """<template mix-target="#toast" mix-bottom>email not available</template>""", 400
+                return "<template>System upgrading</template>", 500  
+
+            return """<template mix-target="#toast" mix-bottom>System under maintenance</template>""", 500  
+        
+        finally:
+            if "cursor" in locals(): cursor.close()
+            if "db" in locals(): db.close()
+    
 
 
 ##############################
