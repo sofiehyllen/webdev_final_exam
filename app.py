@@ -1059,7 +1059,7 @@ def _________DELETE_________(): pass
 
 
 @app.delete("/admin/users/delete/<account_pk>")
-def user_delete(account_pk):
+def admin_user_delete(account_pk):
     try:
         if not session.get("account", ""): return redirect(url_for("view_login"))
         if not "admin" in session.get("account").get("roles"): return redirect(url_for("view_login"))
@@ -1120,6 +1120,45 @@ def user_delete(account_pk):
         if "db" in locals(): db.close()
 
 
+
+@app.delete("/users/delete/<account_pk>")
+def user_delete(account_pk):
+    try:
+        account_pk = x.validate_uuid4(account_pk)
+        account_deleted_at = int(time.time())
+
+        db, cursor = x.db()
+
+        account_roles = session.get("account").get("roles")
+
+        if account_roles in ["customer", "partner"]:
+            q_users = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
+            cursor.execute(q_users, (account_deleted_at, account_pk))
+        elif account_roles == "restaurant":
+            q_restaurants = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
+            cursor.execute(q_restaurants, (account_deleted_at, account_pk))
+        else:
+            x.raise_custom_exception("Invalid account role. No update performed.", 400)
+
+        db.commit()
+
+        return f"""
+                <template mix-target="" mix-bottom>
+                </template>"""
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 ##############################
