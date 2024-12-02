@@ -963,7 +963,17 @@ def user_block(account_pk):
 
         x.send_block_email(account_email)
 
-        return f"""<template mix-redirect="/admin/users"></template>"""
+        unblock_html = render_template("___btn_unblock.html", account_pk=account_pk)
+        toast = render_template("___toast.html", message = "User blocked")
+
+        return f"""
+                <template mix-target="#block-user-{ account_pk }" mix-replace>
+                    {unblock_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
     
     except Exception as ex:
         ic(ex)
@@ -1009,7 +1019,16 @@ def user_unblock(account_pk):
         
         db.commit()
 
-        return f"""<template mix-redirect="/admin/users"></template>"""    
+        block_html = render_template("___btn_block.html", account_pk=account_pk)
+        toast = render_template("___toast.html", message = "User unblocked")
+        return f"""
+                <template mix-target="#unblock-user-{ account_pk }" mix-replace>
+                    {block_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
     
     except Exception as ex:
 
@@ -1071,9 +1090,15 @@ def user_delete(account_pk):
 
         db.commit()
 
+        deleted_at_html = render_template(
+            "___deleted_at.html", account_deleted_at=account_deleted_at
+        )
+
         toast = render_template("___toast.html", message = "User deleted")
         return f"""
-                <template mix-target='#delete-user-btn' mix-replace></template>
+                <template mix-target="#delete-user-btn-{account_pk}" mix-replace>
+                    {deleted_at_html}
+                </template>
                 <template mix-target="#toast" mix-bottom>
                     {toast}
                 </template>                
