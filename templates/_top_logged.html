@@ -12,22 +12,20 @@
 
     <body class="w-full h-100vh text-c-gray:-16">
         <div id="toast" class="d-flex flex-col j-content-center p-fixed w-full top-4 z-10"></div>
-        <div class="d-flex">
+        <div class="d-flex gap-3">
             <form method="POST" action="{{url_for('logout')}}">
                 <button>Logout</button>
             </form>
 
             {% if user and user.roles|length > 1 %}
-                <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
-            {% endif %} 
-
-            {% if 'restaurant' in user.roles %}
-                <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
+            <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
+            {% endif %} {% if 'restaurant' in user.roles %}
+            <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
+            <button><a href="{{ url_for('view_edit_restaurant_profile')}}">Edit profile</a></button>
             {% elif 'customer' in user.roles %}
-                <button><a href="{{ url_for('view_customer_items')}}">Items</a></button>
+            <button><a href="{{ url_for('view_customer_items')}}">Items</a></button>
+            <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
             {% endif %}
-
-
         </div>
     </body>
 </html>
