@@ -1,0 +1,11 @@
+<td class="w-50">
+    <form id="unblock-user-{{ account_pk }}">
+        <button
+            class="cursor-pointer"
+            mix-put="/users/unblock/{{ account_pk }}"
+            mix-data="#unblock-user-{{ account_pk }}"
+            mix-target="#unblock-user-{{ account_pk }}">
+            Unblock
+        </button>
+    </form>
+</td>
