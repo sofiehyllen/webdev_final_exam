@@ -26,8 +26,10 @@ def _________GET_________(): pass
 
 ##############################
 ##############################
-
 ##############################
+
+
+
 @app.get("/test-set-redis")
 def view_test_set_redis():
     redis_host = "redis"
@@ -45,10 +47,13 @@ def view_test_get_redis():
     if not name: name = "no name"
     return name
 
+
+
 ##############################
 @app.get("/")
 def view_index():
     return render_template("view_index.html")
+
 
 
 ##############################
@@ -68,6 +73,7 @@ def view_signup():
     return render_template("view_signup.html", x=x, title="Signup")
 
 
+
 ##############################
 @app.get("/signup_restaurant")
 @x.no_cache
@@ -79,6 +85,7 @@ def view_signup_restaurant():
         if "restaurant" in session.get("user").get("roles"):
             return redirect(url_for("view_restaurant"))         
     return render_template("view_signup_restaurant.html", x=x, title="Signup Restaurant")
+
 
 
 ##############################
@@ -101,6 +108,7 @@ def view_login():
     return render_template("view_login.html", x=x, title="Login", message=request.args.get("message", ""))
 
 
+
 ##############################
 @app.get("/customer")
 @x.no_cache
@@ -111,6 +119,8 @@ def view_customer():
     # if len(user.get("roles", "")) > 1:
     #     return redirect(url_for("view_choose_role"))
     return render_template("view_customer.html", user=user)
+
+
 
 ##############################
 @app.get("/customer/items")
@@ -139,6 +149,8 @@ def view_customer_items():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+
+
 ##############################
 @app.get("/partner")
 @x.no_cache
@@ -162,61 +174,7 @@ def view_admin():
     user = session.get("account")
     if not "admin" in user.get("roles", ""):
         return redirect(url_for("view_login"))
-    return render_template("view_admin.html")
-
-
-##############################
-@app.get("/restaurant")
-@x.no_cache
-def view_restaurant():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
-    if not "restaurant" in user.get("roles", ""):
-        return redirect(url_for("view_login"))    
-    return render_template("view_restaurant.html", user=user)
-
-
-@app.get("/restaurant/create-item")
-@x.no_cache
-def view_restaurant_create_item():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
-    if not "restaurant" in user.get("roles", ""):
-        return redirect(url_for("view_login"))  
-    return render_template("view_restaurant_create_item.html", user=user, x=x)
-
-##############################
-@app.get("/choose-role")
-@x.no_cache
-def view_choose_role():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    if not len(session.get("account").get("roles")) >= 2:
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    return render_template("view_choose_role.html", user=user, title="Choose role")
-
-
-##############################
-@app.get("/forgot-password")
-@x.no_cache
-def view_forgot_password():
-    return render_template("view_forgot_password.html", x=x, title="Forgot password")
-
-
-##############################
-@app.get("/reset-password/<reset_password_key>")
-@x.no_cache
-def view_reset_password(reset_password_key):
-    if not reset_password_key:
-        return redirect(url_for("view_login"))
-    return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
+    return render_template("view_admin.html", user=user)
 
 
 
@@ -237,7 +195,7 @@ def view_admin_users():
         cursor.execute(q)
         accounts = cursor.fetchall()
 
-        return render_template('view_admin_users.html', accounts=accounts)
+        return render_template('view_admin_users.html', user=user, accounts=accounts)
 
     except Exception as ex:
         ic(ex)
@@ -248,6 +206,69 @@ def view_admin_users():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+
+
+##############################
+@app.get("/restaurant")
+@x.no_cache
+def view_restaurant():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    if len(user.get("roles", "")) > 1:
+        return redirect(url_for("view_choose_role"))
+    if not "restaurant" in user.get("roles", ""):
+        return redirect(url_for("view_login"))    
+    return render_template("view_restaurant.html", user=user)
+
+
+
+@app.get("/restaurant/create-item")
+@x.no_cache
+def view_restaurant_create_item():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    if len(user.get("roles", "")) > 1:
+        return redirect(url_for("view_choose_role"))
+    if not "restaurant" in user.get("roles", ""):
+        return redirect(url_for("view_login"))  
+    return render_template("view_restaurant_create_item.html", user=user, x=x)
+
+
+
+##############################
+@app.get("/choose-role")
+@x.no_cache
+def view_choose_role():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    if not len(session.get("account").get("roles")) >= 2:
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    return render_template("view_choose_role.html", user=user, title="Choose role")
+
+
+
+##############################
+@app.get("/forgot-password")
+@x.no_cache
+def view_forgot_password():
+    return render_template("view_forgot_password.html", x=x, title="Forgot password")
+
+
+
+##############################
+@app.get("/reset-password/<reset_password_key>")
+@x.no_cache
+def view_reset_password(reset_password_key):
+    if not reset_password_key:
+        return redirect(url_for("view_login"))
+    return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
+
+
+
+##############################
 @app.get("/edit-profile")
 def view_edit_profile():
     if not session.get("account", ""): 
@@ -255,12 +276,19 @@ def view_edit_profile():
     user = session.get("account")
     return render_template("view_edit_profile.html", user=user, x=x)
 
+
+
+##############################
 @app.get("/edit-restaurant-profile")
 def view_edit_restaurant_profile():
     if not session.get("account", ""): 
         return redirect(url_for("view_login"))
     user = session.get("account")
     return render_template("view_edit_restaurant_profile.html", user=user, x=x)
+
+
+
+
 ##############################
 ##############################
 ##############################
@@ -441,7 +469,7 @@ def login():
         query = """
             SELECT account_pk, account_name, account_email,
             account_password, account_verified_at, account_roles,
-            user_last_name
+            user_last_name, account_deleted_at
             FROM accounts
             LEFT JOIN users ON accounts.account_pk = users.user_pk
             WHERE account_email = %s
@@ -464,6 +492,12 @@ def login():
             toast = render_template("___toast.html", message="Account not verified")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
         
+        # Check if account is deleted
+        if rows[0]["account_deleted_at"]:
+            toast = render_template("___toast.html", message="Account deleted")
+            return f"""<template mix-target="#toast">{toast}</template>""", 403
+        
+
         ic(rows[0])
         # Process roles
         roles = rows[0]["account_roles"].split(', ')
@@ -473,6 +507,7 @@ def login():
             "account_name": rows[0]["account_name"],
             "account_last_name": rows[0].get("user_last_name"),
             "account_email": rows[0]["account_email"],
+            "account_deleted_at": rows[0]["account_deleted_at"],
             "roles": roles,
         }
 
@@ -928,7 +963,17 @@ def user_block(account_pk):
 
         x.send_block_email(account_email)
 
-        return f"""<template mix-redirect="/admin/users"></template>"""
+        unblock_html = render_template("___btn_unblock.html", account_pk=account_pk)
+        toast = render_template("___toast.html", message = "User blocked")
+
+        return f"""
+                <template mix-target="#block-user-{ account_pk }" mix-replace>
+                    {unblock_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
     
     except Exception as ex:
         ic(ex)
@@ -974,7 +1019,16 @@ def user_unblock(account_pk):
         
         db.commit()
 
-        return f"""<template mix-redirect="/admin/users"></template>"""    
+        block_html = render_template("___btn_block.html", account_pk=account_pk)
+        toast = render_template("___toast.html", message = "User unblocked")
+        return f"""
+                <template mix-target="#unblock-user-{ account_pk }" mix-replace>
+                    {block_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
     
     except Exception as ex:
 
@@ -1004,21 +1058,51 @@ def _________DELETE_________(): pass
 ##############################
 
 
-@app.delete("/users/<user_pk>")
-def user_delete(user_pk):
+@app.delete("/users/delete/<account_pk>")
+def user_delete(account_pk):
     try:
-        # Check if user is logged
-        if not session.get("user", ""): return redirect(url_for("view_login"))
-        # Check if it is an admin
-        if not "admin" in session.get("user").get("roles"): return redirect(url_for("view_login"))
-        user_pk = x.validate_uuid4(user_pk)
-        user_deleted_at = int(time.time())
+        if not session.get("account", ""): return redirect(url_for("view_login"))
+        if not "admin" in session.get("account").get("roles"): return redirect(url_for("view_login"))
+
+        account_pk = x.validate_uuid4(account_pk)
+        account_deleted_at = int(time.time())
+
         db, cursor = x.db()
-        q = 'UPDATE users SET user_deleted_at = %s WHERE user_pk = %s'
-        cursor.execute(q, (user_deleted_at, user_pk))
-        if cursor.rowcount != 1: x.raise_custom_exception("cannot delete user", 400)
+
+        query = "SELECT account_roles FROM accounts WHERE account_pk = %s"
+        cursor.execute(query, (account_pk,))
+        row = cursor.fetchone()
+        ic(row)
+        if not row: 
+            x.raise_custom_exception("Account not found", 400)
+        else: 
+            account_roles = row["account_roles"]
+
+        if account_roles in ["customer", "partner"]:
+            q_users = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
+            cursor.execute(q_users, (account_deleted_at, account_pk))
+        elif account_roles == "restaurant":
+            q_restaurants = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
+            cursor.execute(q_restaurants, (account_deleted_at, account_pk))
+
+        else:
+            x.raise_custom_exception("Invalid account role. No update performed.", 400)
+
         db.commit()
-        return """<template>user deleted</template>"""
+
+        deleted_at_html = render_template(
+            "___deleted_at.html", account_deleted_at=account_deleted_at
+        )
+
+        toast = render_template("___toast.html", message = "User deleted")
+        return f"""
+                <template mix-target="#delete-user-btn-{account_pk}" mix-replace>
+                    {deleted_at_html}
+                </template>
+                <template mix-target="#toast" mix-bottom>
+                    {toast}
+                </template>                
+            """
     
     except Exception as ex:
 
