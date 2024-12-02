@@ -1053,18 +1053,19 @@ def user_delete(account_pk):
         query = "SELECT account_roles FROM accounts WHERE account_pk = %s"
         cursor.execute(query, (account_pk,))
         row = cursor.fetchone()
-
+        ic(row)
         if not row: 
             x.raise_custom_exception("Account not found", 400)
         else: 
             account_roles = row["account_roles"]
 
         if account_roles in ["customer", "partner"]:
-            update_query = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
-            cursor.execute(update_query, (account_deleted_at, account_pk))
+            q_users = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
+            cursor.execute(q_users, (account_deleted_at, account_pk))
         elif account_roles == "restaurant":
-            update_query = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
-            cursor.execute(update_query, (account_deleted_at, account_pk))
+            q_restaurants = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
+            cursor.execute(q_restaurants, (account_deleted_at, account_pk))
+
         else:
             x.raise_custom_exception("Invalid account role. No update performed.", 400)
 
@@ -1072,7 +1073,7 @@ def user_delete(account_pk):
 
         toast = render_template("___toast.html", message = "User deleted")
         return f"""
-                # <template mix-target='#u{account_pk}' mix-replace></template>
+                <template mix-target='#delete-user-btn' mix-replace></template>
                 <template mix-target="#toast" mix-bottom>
                     {toast}
                 </template>                
