@@ -1058,7 +1058,7 @@ def _________DELETE_________(): pass
 ##############################
 
 
-@app.delete("/users/delete/<account_pk>")
+@app.delete("/admin/users/delete/<account_pk>")
 def user_delete(account_pk):
     try:
         if not session.get("account", ""): return redirect(url_for("view_login"))
