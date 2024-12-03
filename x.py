@@ -95,9 +95,10 @@ UUID4_REGEX = "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{
 
 USER_ROLES = ["customer", "partner"]
 
-UPLOAD_ITEM_FOLDER = './item_images'
+UPLOAD_ITEM_FOLDER = 'static/item_images'
+UPLOAD_RESTAURANT_FOLDER = 'static/restaurant_images'
 ALLOWED_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
-
+ALLOWED_FILE_REGEX = "^.*\.(png|jpg|jpeg|gif)$"
 
 ##############################
 def validate_uuid4(uuid4 = ""):
@@ -159,11 +160,11 @@ def validate_item_price():
 
 
 ##############################
-def validate_item_image():
-    if 'item_image_name' not in request.files: 
+def validate_item_image(form_field):
+    if form_field not in request.files: 
         raise_custom_exception("item_file missing", 400)
 
-    files = request.files.getlist("item_image_name")
+    files = request.files.getlist(form_field)
     if not files:
         raise_custom_exception("item_file name invalid", 400)
 

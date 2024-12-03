@@ -1,0 +1,27 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full">
+    <h1>All Restaurants</h1>
+
+    <div class="d-flex flex-col j-items-center">
+        <div class="d-flex flex-wrap j-content-center a-items-center gap-5">
+            {% for restaurant in restaurants %}
+            <a href="/customer/restaurant/{{ restaurant.restaurant_pk }}">
+                <article class="d-flex pa-3 shadow-sm rounded-5 h-30 w-110 j-content-between">
+                    <div class="w-66% d-flex flex-col j-content-between">
+                        <p class="text-w-semibold ma-0">{{ restaurant.restaurant_name}}</p>
+                    </div>
+                    <div class="w-33% h-full overflow:hidden d-flex j-content-center a-items-center rounded-5">
+                        <img
+                            src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
+                            alt="{{ restaurant.restaurant_name }}"
+                            class="w-full h-full obj-f-cover" />
+                    </div>
+                </article>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+{% include "_bottom.html" %}
