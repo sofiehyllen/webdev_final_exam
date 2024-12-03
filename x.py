@@ -159,6 +159,16 @@ def validate_item_price():
     return item_price
 
 
+
+##############################
+def validate_search_field():
+    error = f"searchfield {NAME_MIN} to {NAME_MAX} characters."
+    search_text = request.args.get("search_field", "").strip()
+    if not re.match(NAME_REGEX, search_text): raise_custom_exception(error, 400)
+    return search_text
+
+
+
 ##############################
 def validate_item_image(form_field):
     if form_field not in request.files: 

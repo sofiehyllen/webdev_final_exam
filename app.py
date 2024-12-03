@@ -145,7 +145,7 @@ def view_customer_items():
         cursor.execute(q)
         items = cursor.fetchall()
 
-        return render_template("view_customer_items.html", user=user, items=items)
+        return render_template("view_customer_items.html", user=user, items=items, x=x)
     
     except Exception as ex:
         ic(ex)
@@ -366,6 +366,46 @@ def view_edit_restaurant_profile():
     user = session.get("account")
     return render_template("view_edit_restaurant_profile.html", user=user, x=x)
 
+
+
+##############################
+@app.get("/search")
+@x.no_cache
+def search_items():
+    try:
+        search_text = request.args.get("search_field", "").strip()
+        ic(search_text)
+        if not search_text:
+            return render_template("___search_results.html", items=[], message="Please enter a search term.")
+
+
+
+        db, cursor = x.db()
+
+        search_query = """
+            SELECT item_title, item_description, item_price
+            FROM items
+            WHERE item_deleted_at = 0 AND 
+            (item_title LIKE %s OR item_description LIKE %s)
+        """
+        search_param = f"%{search_text}%"
+        cursor.execute(search_query, (search_param, search_param))
+        items = cursor.fetchall()
+
+        return render_template("___search_results.html", items=items, search_text=search_text)
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 
