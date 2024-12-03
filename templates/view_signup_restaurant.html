@@ -24,6 +24,18 @@
             <input name="restaurant_password" type="text" mix-check="{{ x.PASSWORD_REGEX }}" />
         </div>
 
+        <div class="d-flex flex-col">
+            <label for="restaurant_image_name">
+                <span>Logo</span>
+            </label>
+            <input
+                type="file"
+                name="restaurant_image_name"
+                id="restaurant_image_name"
+                accept=".png, .jpg, .jpeg, .gif"
+                mix-check="{{ x.ALLOWED_FILE_REGEX }}" />
+        </div>
+
         <button mix-post="/restaurants" mix-data="#frm_restaurant_signup">Signup</button>
 
         <a href="{{url_for('view_login')}}" class="text-a-center">Login</a>

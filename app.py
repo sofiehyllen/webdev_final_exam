@@ -134,7 +134,14 @@ def view_customer_items():
             return redirect(url_for("view_choose_role"))
 
         db, cursor = x.db()
-        q = 'SELECT * FROM items'
+
+        q = '''
+            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
+            ii.item_image_name
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0
+        '''
         cursor.execute(q)
         items = cursor.fetchall()
 
@@ -148,6 +155,79 @@ def view_customer_items():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
+##############################
+@app.get("/customer/restaurants")
+@x.no_cache
+def view_customer_restaurants():
+    try:
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+        user = session.get("account")
+        if len(user.get("roles", "")) > 1:
+            return redirect(url_for("view_choose_role"))
+
+        db, cursor = x.db()
+
+        cursor.execute("SELECT restaurant_name, restaurant_pk, restaurant_image_name FROM restaurants WHERE restaurant_deleted_at = 0")
+        restaurants = cursor.fetchall()
+
+        return render_template("view_customer_restaurants.html", user=user, restaurants=restaurants)
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+##############################
+@app.get("/customer/restaurant/<restaurant_pk>")
+@x.no_cache
+def view_customer_restaurant_items(restaurant_pk):
+    try:
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+        user = session.get("account")
+        if len(user.get("roles", "")) > 1:
+            return redirect(url_for("view_choose_role"))
+
+
+        db, cursor = x.db()
+
+        cursor.execute(
+            "SELECT restaurant_pk, restaurant_name, restaurant_image_name FROM restaurants WHERE restaurant_pk = %s AND restaurant_deleted_at = 0",
+            (restaurant_pk,))        
+        restaurant = cursor.fetchone()
+        if not restaurant:
+            return render_template("error.html", message="Restaurant not found"), 404
+
+        cursor.execute(
+            "SELECT item_title, item_description, item_price, item_image_name FROM items "
+            "LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk "
+            "WHERE item_restaurant_fk = %s AND item_deleted_at = 0",
+            (restaurant_pk,)
+        )
+        items = cursor.fetchall()
+
+
+        return render_template("view_restaurant_items.html", user=user, restaurant=restaurant, items=items)
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
 
 
 
@@ -401,6 +481,13 @@ def signup_restaurant():
         restaurant_password = x.validate_account_password("restaurant_password")
         hashed_password = generate_password_hash(restaurant_password)
         
+        valid_files = x.validate_item_image("restaurant_image_name")
+        for file, file_name in valid_files:
+            # Save the image to the server
+            image_path = os.path.join(x.UPLOAD_RESTAURANT_FOLDER, file_name)
+            file.save(image_path)
+            restaurant_image_name = file_name
+
         restaurant_pk = str(uuid.uuid4())
         restaurant_created_at = int(time.time())
         restaurant_deleted_at = 0
@@ -421,17 +508,19 @@ def signup_restaurant():
             toast = render_template("___toast.html", message="Email not available")
             return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
 
-
         q = '''
             INSERT INTO restaurants 
-            (restaurant_pk, restaurant_name, restaurant_email, restaurant_password, restaurant_created_at, 
-            restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, restaurant_verification_key)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (restaurant_pk, restaurant_name, restaurant_email, restaurant_password, 
+            restaurant_image_name, restaurant_created_at, restaurant_deleted_at, 
+            restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, restaurant_verification_key)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
-        cursor.execute(q, (restaurant_pk, restaurant_name, restaurant_email, 
-                            hashed_password, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
-                            restaurant_updated_at, restaurant_verified_at, account_verification_key))
-
+        cursor.execute(q, (
+            restaurant_pk, restaurant_name, restaurant_email, hashed_password, 
+            restaurant_image_name, restaurant_created_at, restaurant_deleted_at, 
+            restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
+            account_verification_key
+        ))
         
         x.send_verify_email(restaurant_email, account_verification_key)
 
@@ -704,7 +793,7 @@ def create_item():
 
         #TODO: add multiple files one at a time
 
-        valid_files = x.validate_item_image() 
+        valid_files = x.validate_item_image("item_image_name") 
         
         for file, item_image_name in valid_files:
             print(request.files.getlist("item_image_name"))
@@ -1199,7 +1288,8 @@ def verify_user(verification_key):
             WHERE restaurant_verification_key = %s
         """
         cursor.execute(restaurant_query, (int(time.time()), verification_key))
-
+        ic(cursor.rowcount) 
+        
         if cursor.rowcount == 1:
             db.commit()
             return redirect(url_for("view_login", message="Restaurant verified, please login"))

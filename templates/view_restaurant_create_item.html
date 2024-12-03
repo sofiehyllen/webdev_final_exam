@@ -35,7 +35,13 @@
             <label for="item_image_name">
                 <span>Image</span>
             </label>
-            <input type="file" name="item_image_name" id="item_image_name" accept=".png, .jpg, .jpeg, .gif" multiple />
+            <input
+                type="file"
+                name="item_image_name"
+                id="item_image_name"
+                accept=".png, .jpg, .jpeg, .gif"
+                mix-check="{{ x.ALLOWED_FILE_REGEX }}"
+                multiple />
             <pre id="fileList"></pre>
         </div>
 
