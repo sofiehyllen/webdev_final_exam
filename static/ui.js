@@ -9,3 +9,7 @@ dropdowns.forEach(dropdown => {
         menu.classList.toggle('hidden');
     });
 });
+
+function showResults() {
+    document.getElementById('search-results').classList.remove('hidden');
+}

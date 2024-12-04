@@ -373,26 +373,41 @@ def view_edit_restaurant_profile():
 @x.no_cache
 def search_items():
     try:
+
         search_text = request.args.get("search_field", "").strip()
         ic(search_text)
         if not search_text:
             return render_template("___search_results.html", items=[], message="Please enter a search term.")
 
-
-
         db, cursor = x.db()
 
-        search_query = """
-            SELECT item_title, item_description, item_price
+        # Search query for items
+        item_search_query = """
+            SELECT items.item_title, items.item_description, items.item_price, item_images.item_image_name
             FROM items
-            WHERE item_deleted_at = 0 AND 
-            (item_title LIKE %s OR item_description LIKE %s)
+            LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk
+            WHERE items.item_deleted_at = 0 AND 
+            (items.item_title LIKE %s OR items.item_description LIKE %s)
         """
         search_param = f"%{search_text}%"
-        cursor.execute(search_query, (search_param, search_param))
+        cursor.execute(item_search_query, (search_param, search_param))
         items = cursor.fetchall()
 
-        return render_template("___search_results.html", items=items, search_text=search_text)
+        # Search query for restaurants
+        restaurant_search_query = """
+            SELECT restaurants.restaurant_pk, restaurants.restaurant_name, restaurants.restaurant_image_name
+            FROM restaurants
+            WHERE restaurants.restaurant_deleted_at = 0 AND
+            (restaurants.restaurant_name LIKE %s)
+        """
+        cursor.execute(restaurant_search_query, (search_param,))
+        restaurants = cursor.fetchall()
+        
+        results = items + restaurants
+
+        user = session.get("account", "")
+
+        return render_template("___search_results.html", items=items, restaurants=restaurants, results=results, search_text=search_text, user=user)
 
     except Exception as ex:
         ic(ex)
