@@ -3,3 +3,4 @@ database_backup
 item_images
 restaurant_images
 flask_session
+static/output.css
