@@ -1,46 +1,48 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full d-flex flex-col">
-    <h1>Edit profile</h1>
-    <div class="w-half">{{ user }}</div>
-    <form action="PUT" id="edit-frm" class="pt-40 w-25% d-flex flex-col gap-4 mx-auto">
-        <div class="d-flex flex-col">
-            <label for="user_name">
-                <span>First Name:</span>
+<main class="w-full flex flex-col items-center px-4">
+    <form action="PUT" id="edit-frm" class="pt-6 w-full max-w-md flex flex-col gap-6 mx-auto shadow-lg p-10 rounded-md mt-20">
+        <h1 class="text-2xl font-bold">Edit Profile</h1>
+        <div class="flex flex-col">
+            <label for="user_name" class="text-sm  text-gray-500 mb-1">
+                First Name:
             </label>
             <input
                 type="text"
                 id="user_name"
                 name="user_name"
                 value="{{ user.account_name }}"
-                mix-check="{{ x.NAME_REGEX }}"
-                required />
+                mix-check="{{ x.NAME_REGEX }}"/>
         </div>
-        <div class="d-flex flex-col">
-            <label for="user_name">
-                <span>Last Name:</span>
+        <div class="flex flex-col">
+            <label for="user_last_name" class="text-sm  text-gray-500 mb-1">
+                Last Name:
             </label>
             <input
                 type="text"
                 id="user_last_name"
                 name="user_last_name"
                 value="{{ user.account_last_name }}"
-                mix-check="{{ x.NAME_REGEX }}"
-                required />
+                mix-check="{{ x.NAME_REGEX }}"/>
         </div>
-        <div class="d-flex flex-col">
-            <label for="user_email">
-                <span>Email:</span>
+        <div class="flex flex-col">
+            <label for="user_email" class="text-sm  text-gray-500 mb-1">
+                Email:
             </label>
             <input
                 type="text"
                 id="user_email"
                 name="user_email"
                 value="{{ user.account_email }}"
-                mix-check="{{ x.EMAIL_REGEX }}"
-                required />
+                mix-check="{{ x.EMAIL_REGEX }}"/>
         </div>
-        <button type="submit" mix-put="/users" mix-data="#edit-frm">Save</button>
+        <button
+            type="submit"
+            mix-put="/users"
+            mix-data="#edit-frm"
+            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+            Save
+        </button>
     </form>
 </main>
 
