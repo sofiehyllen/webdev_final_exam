@@ -125,7 +125,7 @@ def view_customer():
 ##############################
 @app.get("/customer/items")
 @x.no_cache
-def view_customer_items():
+def view_all_items():
     try:
         if not session.get("account", ""): 
             return redirect(url_for("view_login"))
@@ -145,7 +145,7 @@ def view_customer_items():
         cursor.execute(q)
         items = cursor.fetchall()
 
-        return render_template("view_customer_items.html", user=user, items=items, x=x)
+        return render_template("view_all_items.html", user=user, items=items, x=x)
     
     except Exception as ex:
         ic(ex)
@@ -161,7 +161,7 @@ def view_customer_items():
 ##############################
 @app.get("/customer/restaurants")
 @x.no_cache
-def view_customer_restaurants():
+def view_all_restaurants():
     try:
         if not session.get("account", ""): 
             return redirect(url_for("view_login"))
@@ -174,7 +174,7 @@ def view_customer_restaurants():
         cursor.execute("SELECT restaurant_name, restaurant_pk, restaurant_image_name FROM restaurants WHERE restaurant_deleted_at = 0")
         restaurants = cursor.fetchall()
 
-        return render_template("view_customer_restaurants.html", user=user, restaurants=restaurants)
+        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants)
     
     except Exception as ex:
         ic(ex)
