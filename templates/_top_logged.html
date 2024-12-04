@@ -12,49 +12,17 @@
 
     <body class="w-full h-screen text-gray-950">
         <div id="toast" class="flex flex-col justify-center fixed w-full top-4 z-10"></div>
-        <header class="flex gap-3 p-4 justify-between">
+        <header class="">
             <!-- Dropdown container -->
-            <div>
-                <a href="/{{ user.roles[0] }}">Wolt</a>
-            </div>
-            {% if user and user.roles|length > 1 %}
-                <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
-            {% endif %}
+
             
             {% if 'restaurant' in user.roles %}
-                <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
-                <button><a href="{{ url_for('view_edit_restaurant_profile')}}">Edit profile</a></button>
+                {% include "__header_customer.html"%}
             {% elif 'customer' in user.roles %}
-                <button><a href="{{ url_for('view_all_items')}}">Items</a></button>
-                <button><a href="{{ url_for('view_all_restaurants')}}">Restaurants</a></button>
-                
-                <div class="hidden bg-gray-500 w-full absolute h-32 top-0 left-0 z-0"></div>
-                <form id="search_frm" method="GET" action="/search" class="z-10 relative">
-                    <input id="search_field" type="text" name="search_field" placeholder="Search in Wolt..." class="placeholder:text-sm rounded-full bg-gray-200 h-8 pl-8"/>
-                    <button type="submit" class="absolute left-2 top-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </button>
-                </form>
+                {% include "__header_customer.html"%}
             {% elif 'partner' in user.roles %}
-                <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
+                {% include "__header_partner.html"%}
             {% endif %}
-
-            <div class="relative dropdown-container">
-                <button class="p-2 rounded-full hover:bg-gray-500" id="dropdown-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                </button>
-    
-                <div id="dropdown-menu" class="absolute right-0 hidden mt-1 bg-white rounded-md shadow-lg w-48 z-50">
-                    <form method="POST" action="{{url_for('logout')}}" class="">
-                        <button class="w-full text-left hover:bg-gray-200 p-2 rounded-md">Logout</button>
-                    </form>
-                    <a href="{{ url_for('view_edit_profile') }}" class="w-full text-left hover:bg-gray-200 p-2 rounded-md block">Edit profile</a>
-                </div>
-            </div>
         </header>
         
         
