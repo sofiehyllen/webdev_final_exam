@@ -1,52 +1,65 @@
 {% include "_top.html" %}
 
-<main class="w-full h-100vh d-flex p-items-center">
-    <form id="frm_user_signup" class="w-25% d-flex flex-col gap-4 mx-auto">
+<main class="w-full h-screen flex items-center">
+    <form id="frm_user_signup" class="w-full max-w-sm flex flex-col gap-6 mx-auto p-8 shadow-lg rounded-md">
         <div>
-            <label for="user_role"> Role </label>
+            <label for="user_role" class="text-sm text-gray-600 mb-1">Role</label>
             <select
                 name="user_role"
                 id="user_role"
                 mix-check="{{ x.USER_ROLES }}"
-                class="h-12 border-1 border-c-gray:+30 w-full outline-none pl-2 rounded-sm">
+                class="block text-gray-600">
                 <option disabled selected value>-- Select an option --</option>
                 <option value="customer">Customer</option>
                 <option value="partner">Partner</option>
             </select>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="user_name">
-                <span>First name</span>
-            </label>
-            <input name="user_name" type="text" mix-check="{{ x.NAME_REGEX }}" />
+        <div class="flex flex-col">
+            <label for="user_name" class="text-sm text-gray-600 mb-1">First name</label>
+            <input
+                name="user_name"
+                type="text"
+                mix-check="{{ x.NAME_REGEX }}"/>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="user_last_name">
-                <span>Last name</span>
-            </label>
-            <input name="user_last_name" type="text" mix-check="{{ x.NAME_REGEX }}" />
+        <div class="flex flex-col">
+            <label for="user_last_name" class="text-sm text-gray-600 mb-1">Last name</label>
+            <input
+                name="user_last_name"
+                type="text"
+                mix-check="{{ x.NAME_REGEX }}"/>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="user_email">
-                <span>Email</span>
-            </label>
-            <input name="user_email" type="text" mix-check="{{ x.EMAIL_REGEX }}" />
+        <div class="flex flex-col">
+            <label for="user_email" class="text-sm text-gray-600 mb-1">Email</label>
+            <input
+                name="user_email"
+                type="text"
+                mix-check="{{ x.EMAIL_REGEX }}"/>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="user_password" class="d-flex">
+        <div class="flex flex-col">
+            <label for="user_password" class="flex items-center text-sm text-gray-600 mb-1">
                 <span>Password</span>
-                <span class="ml-auto text-c-gray:+25">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
+                <span class="ml-auto text-gray-400 text-xs">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
             </label>
-            <input name="user_password" type="text" mix-check="{{ x.PASSWORD_REGEX }}" />
+            <input
+                name="user_password"
+                type="text"
+                mix-check="{{ x.PASSWORD_REGEX }}" />
         </div>
 
-        <button mix-post="/users" mix-data="#frm_user_signup">Signup</button>
+        <button
+            mix-post="/users"
+            mix-data="#frm_user_signup"
+            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+            Signup
+        </button>
 
-        <a href="{{url_for('view_signup_restaurant')}}" class="text-a-center">Want to register your restaurant?</a>
+        <a href="{{ url_for('view_signup_restaurant') }}" class="text-center text-blue-500 hover:text-blue-600 transition duration-200">
+            Want to register your restaurant?
+        </a>
     </form>
 </main>
 

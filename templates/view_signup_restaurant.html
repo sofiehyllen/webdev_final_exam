@@ -1,44 +1,55 @@
 {% include "_top.html" %}
 
-<main class="w-full h-100vh d-flex p-items-center">
-    <form id="frm_restaurant_signup" class="w-25% d-flex flex-col gap-4 mx-auto">
-        <div class="d-flex flex-col">
-            <label for="restaurant_name">
-                <span>Restaurant name</span>
-            </label>
-            <input name="restaurant_name" type="text" mix-check="{{ x.NAME_REGEX }}" />
+<main class="w-full h-screen flex items-center">
+    <form id="frm_restaurant_signup" class="w-full max-w-sm flex flex-col gap-6 mx-auto p-8 shadow-lg rounded-md">
+        <div class="flex flex-col">
+            <label for="restaurant_name" class="text-sm text-gray-600 mb-1">Restaurant name</label>
+            <input
+                name="restaurant_name"
+                type="text"
+                mix-check="{{ x.NAME_REGEX }}"/>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="restaurant_email">
-                <span>Email</span>
-            </label>
-            <input name="restaurant_email" type="text" mix-check="{{ x.EMAIL_REGEX }}" />
+        <div class="flex flex-col">
+            <label for="restaurant_email" class="text-sm text-gray-600 mb-1">Email</label>
+            <input
+                name="restaurant_email"
+                type="text"
+                mix-check="{{ x.EMAIL_REGEX }}"/>
         </div>
 
-        <div class="d-flex flex-col">
-            <label for="restaurant_password" class="d-flex">
+        <div class="flex flex-col">
+            <label for="restaurant_password" class="flex items-center text-sm text-gray-600 mb-1">
                 <span>Password</span>
-                <span class="ml-auto text-c-gray:+25">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
-            </label>
-            <input name="restaurant_password" type="text" mix-check="{{ x.PASSWORD_REGEX }}" />
-        </div>
-
-        <div class="d-flex flex-col">
-            <label for="restaurant_image_name">
-                <span>Logo</span>
+                <span class="ml-auto text-gray-400 text-xs">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
             </label>
             <input
-                type="file"
-                name="restaurant_image_name"
-                id="restaurant_image_name"
-                accept=".png, .jpg, .jpeg, .gif"
-                mix-check="{{ x.ALLOWED_FILE_REGEX }}" />
+                name="restaurant_password"
+                type="text"
+                mix-check="{{ x.PASSWORD_REGEX }}"/>
         </div>
 
-        <button mix-post="/restaurants" mix-data="#frm_restaurant_signup">Signup</button>
+        <div class="flex flex-col">
+            <label for="restaurant_image_name" class="text-sm text-gray-600 mb-1">Logo</label>
+                <input
+                    type="file"
+                    name="restaurant_image_name"
+                    id="restaurant_image_name"
+                    accept=".png, .jpg, .jpeg, .gif"
+                    mix-check="{{ x.ALLOWED_FILE_REGEX }}"
+                    class="border-none "/>
+        </div>
 
-        <a href="{{url_for('view_login')}}" class="text-a-center">Login</a>
+        <button
+            mix-post="/restaurants"
+            mix-data="#frm_restaurant_signup"
+            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+            Signup
+        </button>
+
+        <a href="{{ url_for('view_login') }}" class="text-center text-blue-500 hover:text-blue-600 transition duration-200">
+            Login
+        </a>
     </form>
 </main>
 
