@@ -17,17 +17,24 @@
             </form>
 
             {% if user and user.roles|length > 1 %}
-            <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
+                <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
             {% endif %} {% if 'restaurant' in user.roles %}
-            <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
-            <button><a href="{{ url_for('view_edit_restaurant_profile')}}">Edit profile</a></button>
+                <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
+                <button><a href="{{ url_for('view_edit_restaurant_profile')}}">Edit profile</a></button>
             {% elif 'customer' in user.roles %}
-            <button><a href="{{ url_for('view_customer_items')}}">Items</a></button>
-            <button><a href="{{ url_for('view_customer_restaurants')}}">Restaurants</a></button>
-            <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
+                <button><a href="{{ url_for('view_customer_items')}}">Items</a></button>
+                <button><a href="{{ url_for('view_customer_restaurants')}}">Restaurants</a></button>
+                <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
+
+                <div class="opacity-100 bg-c-gray w-full p-absolute h-30 "></div>
+                    <form id="search_frm" method="GET" action="/search" class="z-10">
+                        <input id="search_field" type="text" name="search_field" />
+                        <button type="submit" class="cursor-pointer">Search</button>
+                    </form>
+                
+
             {% elif 'partner' in user.roles%}
-            <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
+                <button><a href="{{ url_for('view_edit_profile')}}">Edit profile</a></button>
             {% endif %}
         </div>
-    </body>
-</html>
+
