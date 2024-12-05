@@ -17,24 +17,24 @@
     <tr class="border-b">
             <td class="py-2 px-4">{{ item.restaurant_name }}</td>
             <td class="py-2 px-4">{{ item.item_title }}</td>
-            <td id="block-unblock-user-btn-{{ item.item_pk }}" class="py-2 px-4">
+            <td id="block-unblock-item-btn-{{ item.item_pk }}" class="py-2 px-4">
                 {% if not item.item_blocked_at %}
-                <form id="block-user-{{ item.item_pk }}">
+                <form id="block-item-{{ item.item_pk }}">
                     <button
                         class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                        mix-put="/items/block/{{ item.item_pk }}"
-                        mix-data="#block-user-{{ item.item_pk }}"
-                        mix-target="#block-user-{{ item.item_pk }}">
+                        mix-put="/block/item/{{ item.item_pk }}"
+                        mix-data="#block-item-{{ item.item_pk }}"
+                        mix-target="#block-item-{{ item.item_pk }}">
                         Block
                     </button>
                 </form>
                 {% else %}
-                <form id="unblock-user-{{ item.item_pk }}">
+                <form id="unblock-item-{{ item.item_pk }}">
                     <button
                         class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-                        mix-put="/items/unblock/{{ item.item_pk }}"
-                        mix-data="#unblock-user-{{ item.item_pk }}"
-                        mix-target="#unblock-user-{{ item.item_pk }}">
+                        mix-put="/unblock/item/{{ item.item_pk }}"
+                        mix-data="#unblock-item-{{ item.item_pk }}"
+                        mix-target="#unblock-item-{{ item.item_pk }}">
                         Unblock
                     </button>
                 </form>
