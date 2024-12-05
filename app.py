@@ -1123,8 +1123,8 @@ def block_target(target_type, pk):
 
         # Fetch all relevant records
         queries = {
-            "user": "SELECT user_pk FROM users WHERE user_pk = %s",
-            "restaurant": "SELECT restaurant_pk FROM restaurants WHERE restaurant_pk = %s",
+            "user": "SELECT user_pk, user_email FROM users WHERE user_pk = %s",
+            "restaurant": "SELECT restaurant_pk, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
             "item": "SELECT item_pk FROM items WHERE item_pk = %s"
         }
 
@@ -1139,15 +1139,29 @@ def block_target(target_type, pk):
 
         # Determine the appropriate update query based on target_type
         if target_type == "user":
+            email = result["user_email"]
             q = "UPDATE users SET user_blocked_at = %s WHERE user_pk = %s"
+
         elif target_type == "restaurant":
+            email = result["restaurant_email"]
             q = "UPDATE restaurants SET restaurant_blocked_at = %s WHERE restaurant_pk = %s"
+
         elif target_type == "item":
             q = "UPDATE items SET item_blocked_at = %s WHERE item_pk = %s"
+            cursor.execute("""
+                        SELECT r.restaurant_email FROM restaurants r 
+                        JOIN items i ON r.restaurant_pk = i.item_restaurant_fk 
+                        WHERE i.item_pk = %s""", (pk,))
+            restaurant = cursor.fetchone()
+            if not restaurant:
+                x.raise_custom_exception("Restaurant not found for the item", 404)
+            email = restaurant["restaurant_email"]
 
         # Execute the update
         cursor.execute(q, (blocked_at, pk))
         db.commit()
+
+        x.send_block_email(email)
 
         # Render response templates
         unblock_html = render_template("___btn_unblock.html", pk=pk, target_type=target_type)
@@ -1276,8 +1290,8 @@ def delete_target(target_type, pk):
 
         # Queries for different target types
         queries = {
-            "user": "SELECT user_pk FROM users WHERE user_pk = %s",
-            "restaurant": "SELECT restaurant_pk FROM restaurants WHERE restaurant_pk = %s",
+            "user": "SELECT user_pk, user_email FROM users WHERE user_pk = %s",
+            "restaurant": "SELECT restaurant_pk, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
             "item": "SELECT item_pk FROM items WHERE item_pk = %s"
         }
 
