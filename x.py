@@ -209,128 +209,71 @@ def validate_item_image(form_field):
 
 
 ##############################
-def send_verify_email(to_email, account_verification_key):
+def send_email(to_email, subject, body):
     try:
-        # Create a gmail fullflaskdemomail
-        # Enable (turn on) 2 step verification/factor in the google account manager
-        # Visit: https://myaccount.google.com/apppasswords
-
-
         # Email and password of the sender's Gmail account
         sender_email = "exampythonmail@gmail.com"
-        password = "qtgoaneaffxkqcjp"  # If 2FA is on, use an App Password instead
+        password = "qtgoaneaffxkqcjp"  # Use an App Password if 2FA is on
 
-
-        # Receiver email address
-        receiver_email = to_email
-        
         # Create the email message
         message = MIMEMultipart()
         message["From"] = "My company name"
-        message["To"] = receiver_email
-        message["Subject"] = "Verify your account"
-
-        # Body of the email
-        body = f"""To verify your account, please <a href="http://127.0.0.1/verify/{account_verification_key}">click here</a>"""
+        message["To"] = to_email
+        message["Subject"] = subject
         message.attach(MIMEText(body, "html"))
 
         # Connect to Gmail's SMTP server and send the email
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()  # Upgrade the connection to secure
+            server.starttls()  # Upgrade connection to secure
             server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
-        print("Email sent successfully!")
+            server.sendmail(sender_email, to_email, message.as_string())
 
-        return "email sent"
-
+        print(f"{subject} email sent successfully!")
+        return f"{subject} email sent"
+    
     except Exception as ex:
-        raise_custom_exception("cannot send email", 500)
+        raise_custom_exception(f"cannot send {subject.lower()} email", 500)
     finally:
         pass
+
+
+
+##############################
+def send_verify_email(to_email, account_verification_key):
+    body = f"""To verify your account, please <a href="http://127.0.0.1/verify/{account_verification_key}">click here</a>"""
+    return send_email(to_email, "Verify your account", body)
 
 
 
 ##############################
 def send_reset_password_email(to_email, account_password_reset_key):
-    try:
-        # Email and password of the sender's Gmail account
-        sender_email = "exampythonmail@gmail.com"
-        password = "qtgoaneaffxkqcjp"  # If 2FA is on, use an App Password instead
-
-        # Receiver email address
-        receiver_email = to_email
-        
-        # Create the email message
-        message = MIMEMultipart()
-        message["From"] = "My company name"
-        message["To"] = receiver_email
-        message["Subject"] = "Reset Your Password"
-
-        # Body of the email
-        body = f"""
-        <p>Hello,</p>
-        <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
-        <p><a href="http://127.0.0.1/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
-        <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
-        <p>Thank you,<br>My company name</p>
-        """
-        message.attach(MIMEText(body, "html"))
-
-        # Connect to Gmail's SMTP server and send the email
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()  # Upgrade the connection to secure
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
-        print("Reset password email sent successfully!")
-
-        return "reset email sent"
-
-    except Exception as ex:
-        raise_custom_exception("cannot send reset email", 500)
-    finally:
-        pass
+    body = f"""
+    <p>Hello,</p>
+    <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
+    <p><a href="http://127.0.0.1/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
+    <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
+    <p>Thank you,<br>My company name</p>
+    """
+    return send_email(to_email, "Reset Your Password", body)
 
 
 
 ##############################
 def send_block_email(to_email):
-    try:
-        # Email and password of the sender's Gmail account
-        sender_email = "exampythonmail@gmail.com"
-        password = "qtgoaneaffxkqcjp"  # If 2FA is on, use an App Password instead
-
-        # Receiver email address
-        receiver_email = to_email
-        
-        # Create the email message
-        message = MIMEMultipart()
-        message["From"] = "My company name"
-        message["To"] = receiver_email
-        message["Subject"] = "You account has been blocked"
-
-        # Body of the email
-        body = f"""
-        <p>Hello,</p>
-        <p>We contact you to inform you that you account has been blocked. If you have any questions feel free to contact us.</p>
-        <p>Sincerely,<br>My company name</p>
-        """
-        message.attach(MIMEText(body, "html"))
-
-        # Connect to Gmail's SMTP server and send the email
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()  # Upgrade the connection to secure
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
-        print("Block email sent successfully!")
-
-        return "block email sent"
-
-    except Exception as ex:
-        raise_custom_exception("cannot send block email", 500)
-    finally:
-        pass
+    body = f"""
+    <p>Hello,</p>
+    <p>We contact you to inform you that your account has been blocked. If you have any questions, feel free to contact us.</p>
+    <p>Sincerely,<br>My company name</p>
+    """
+    return send_email(to_email, "Your account has been blocked", body)
 
 
 
-
-
+##############################
+def send_item_block_email(to_email):
+    body = f"""
+    <p>Hello,</p>
+    <p>We contact you to inform you that one of your menu items has been blocked. If you have any questions, feel free to contact us.</p>
+    <p>Sincerely,<br>My company name</p>
+    """
+    return send_email(to_email, "Your menu item has been blocked", body)

@@ -1,10 +1,10 @@
 <td class="w-50">
-    <form id="block-user-{{ account_pk }}">
+    <form id="block-{{ target_type }}-{{ pk }}">
         <button
-            class="cursor-pointer"
-            mix-put="/users/block/{{ account_pk }}"
-            mix-data="#block-user-{{ account_pk }}"
-            mix-target="#block-user-{{ account_pk }}">
+            class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+            mix-put="/block/{{ target_type }}/{{ pk }}"
+            mix-data="#block-{{ target_type }}-{{ pk }}"
+            mix-target="#block-{{ target_type }}-{{ pk }}">
             Block
         </button>
     </form>

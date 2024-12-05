@@ -1,0 +1,62 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full pt-10">
+    <h1 class="text-4xl font-semibold mb-4">All Items</h1> 
+    <h2 class="text-xl font-semibold mb-3">Customers & Partners</h2>
+    <table class="w-full table-auto border-collapse mb-6">
+        <thead>
+            <tr class="text-left border-b">
+                <th class="py-2 px-4">Restaurant</th>
+                <th class="py-2 px-4">Title</th>
+                <th class="py-2 px-4">Block item</th>
+                <th class="py-2 px-4">Delete user</th>
+            </tr>
+        </thead>
+        <tbody>
+    {% for item in items %} 
+    <tr class="border-b">
+            <td class="py-2 px-4">{{ item.restaurant_name }}</td>
+            <td class="py-2 px-4">{{ item.item_title }}</td>
+            <td id="block-unblock-item-btn-{{ item.item_pk }}" class="py-2 px-4">
+                {% if not item.item_blocked_at %}
+                <form id="block-item-{{ item.item_pk }}">
+                    <button
+                        class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                        mix-put="/block/item/{{ item.item_pk }}"
+                        mix-data="#block-item-{{ item.item_pk }}"
+                        mix-target="#block-item-{{ item.item_pk }}">
+                        Block
+                    </button>
+                </form>
+                {% else %}
+                <form id="unblock-item-{{ item.item_pk }}">
+                    <button
+                        class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
+                        mix-put="/unblock/item/{{ item.item_pk }}"
+                        mix-data="#unblock-item-{{ item.item_pk }}"
+                        mix-target="#unblock-item-{{ item.item_pk }}">
+                        Unblock
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+            <td class="py-2 px-4" id="delete-item-{{ item.item_pk }}">
+                {% if item.item_deleted_at == 0 %}
+                <button
+                    class=""
+                    title="Delete Item"
+                    mix-delete="/admin/delete/item/{{ item.item_pk }}"
+                    mix-target="#delete-item-{{ item.item_pk }}">
+                    🗑️
+                </button>
+                {% else %}
+                <div class="flex items-center">{{ item.item_deleted_at }}</div>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+</main>
+
+{% include "_bottom.html" %}
