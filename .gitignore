@@ -2,5 +2,6 @@ __pycache__
 database_backup
 item_images
 restaurant_images
-flask_session
+flask_session/
 static/output.css
+node_modules/
