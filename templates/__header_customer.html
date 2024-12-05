@@ -3,7 +3,7 @@
     <div class="w-1/3 flex gap-3 justify-start align-middle pl-20">
       <a class="text-3xl font-semibold" href="/{{ user.roles[0] }}">Wolt</a>
       {% if user and user.roles|length > 1 %}
-          <button><a href="{{ url_for('view_choose_role')}}">Change role</a></button>
+          <a href="{{ url_for('view_choose_role')}}">Change role</a>
       {% endif %}
     </div>
     
