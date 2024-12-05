@@ -1364,9 +1364,24 @@ def delete_target(target_type, pk):
 def delete_user(account_pk):
     try:
         account_pk = x.validate_uuid4(account_pk)
+        provided_password = x.validate_account_password("user_password")
         account_deleted_at = int(time.time())
 
         db, cursor = x.db()
+
+        q = "SELECT account_password FROM accounts WHERE account_pk = %s"
+        cursor.execute(q, (account_pk,))
+        result = cursor.fetchone()
+
+        if not result:
+            x.raise_custom_exception("User not found.", 404)
+
+        stored_password_hash = result["account_password"]
+        
+        if not check_password_hash(stored_password_hash, provided_password):
+            toast = render_template("___toast.html", message="Password incorrect")
+            return f"<template mix-target='#toast' mix-top>{toast}</template>" 
+
 
         account_roles = session.get("account").get("roles")
 
