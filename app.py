@@ -1125,12 +1125,12 @@ def block_target(target_type, pk):
         queries = {
             "user": "SELECT user_pk, user_email FROM users WHERE user_pk = %s",
             "restaurant": "SELECT restaurant_pk, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
-            "item": "SELECT item_pk FROM items WHERE item_pk = %s"
+            "item": "SELECT item_pk, item_restaurant_fk FROM items WHERE item_pk = %s"
         }
 
         if target_type not in queries:
             x.raise_custom_exception("Invalid target type", 400)
-                    # Execute the query to check if the PK exists in the corresponding table
+
         cursor.execute(queries[target_type], (pk,))
         result = cursor.fetchone()  # Fetch single record
 
@@ -1147,21 +1147,24 @@ def block_target(target_type, pk):
             q = "UPDATE restaurants SET restaurant_blocked_at = %s WHERE restaurant_pk = %s"
 
         elif target_type == "item":
-            q = "UPDATE items SET item_blocked_at = %s WHERE item_pk = %s"
-            cursor.execute("""
-                        SELECT r.restaurant_email FROM restaurants r 
-                        JOIN items i ON r.restaurant_pk = i.item_restaurant_fk 
-                        WHERE i.item_pk = %s""", (pk,))
+            # For item, fetch the related restaurant email
+            restaurant_fk = result["item_restaurant_fk"]
+            cursor.execute("SELECT restaurant_email FROM restaurants WHERE restaurant_pk = %s", (restaurant_fk,))
             restaurant = cursor.fetchone()
             if not restaurant:
                 x.raise_custom_exception("Restaurant not found for the item", 404)
-            email = restaurant["restaurant_email"]
+            email = restaurant["restaurant_email"]  # Email related to the restaurant of the item
+            q = "UPDATE items SET item_blocked_at = %s WHERE item_pk = %s"
 
         # Execute the update
         cursor.execute(q, (blocked_at, pk))
         db.commit()
 
-        x.send_block_email(email)
+        # Send email notifications
+        if target_type in ["user", "restaurant"]:
+            x.send_block_email(email)  # Send email for user or restaurant blocking
+        if target_type == "item":
+            x.send_item_block_email(email)  # Send email for item-related block
 
         # Render response templates
         unblock_html = render_template("___btn_unblock.html", pk=pk, target_type=target_type)
@@ -1188,6 +1191,9 @@ def block_target(target_type, pk):
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
 
 
 @app.put("/unblock/<target_type>/<pk>")
