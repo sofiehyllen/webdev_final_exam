@@ -1385,7 +1385,7 @@ def delete_user(account_pk):
 
         session.pop("account", None)
         
-        return redirect(url_for("view_login")) # Verify if this part is correct for your front-end logic.
+        return """<template mix-redirect="/login"></template>"""
     
     except Exception as ex:
         ic(ex)

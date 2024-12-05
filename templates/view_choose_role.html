@@ -1,10 +1,9 @@
 {% include "_top.html" %}
 
-<main class="w-full h-100vh d-flex flex-col p-items-center">
-    <div class="d-flex flex-col gap-4 my-auto p-items-center">
+<main class="w-full h-screen flex flex-col items-center">
+    <div class="flex flex-col gap-4 my-auto items-center">
         {% for role in user.get("roles"): %}
-        <a href="/{{role}}" class="d-flex a-items-center j-content-center h-12 w-100% px-10 rounded-4
-        border border-1 bg-c-green text-c-white">
+        <a href="/{{ role }}" class="flex items-center justify-center h-12 w-full px-10 rounded-lg  bg-blue-500 text-white">
             {{ role }}
         </a>
         {% endfor %}
