@@ -260,7 +260,7 @@ def view_admin():
 
 ##############################
 @app.get("/admin/users")
-def view_admin_users():
+def view_all_users():
     try:
         # Ensure the user is an admin
         if not session.get("account", ""): 
@@ -275,7 +275,7 @@ def view_admin_users():
         cursor.execute(q)
         accounts = cursor.fetchall()
 
-        return render_template('view_admin_users.html', user=user, accounts=accounts)
+        return render_template('view_all_users.html', user=user, accounts=accounts)
 
     except Exception as ex:
         ic(ex)
@@ -286,6 +286,47 @@ def view_admin_users():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+##############################
+@app.get("/admin/items")
+def view_all_items_admin():
+    try:
+        # Ensure the user is an admin
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+        user = session.get("account")
+        if not "admin" in user.get("roles", ""):
+            return redirect(url_for("view_login"))
+        
+        # Connect to DB and fetch users
+        db, cursor = x.db()
+        q = '''
+            SELECT 
+                items.item_pk, 
+                items.item_title, 
+                items.item_price, 
+                items.item_blocked_at, 
+                items.item_deleted_at, 
+                restaurants.restaurant_name
+            FROM items
+            LEFT JOIN restaurants ON items.item_restaurant_fk = restaurants.restaurant_pk
+        '''
+        cursor.execute(q)
+        items = cursor.fetchall()
+
+        return render_template('view_all_items_admin.html', user=user, items=items)
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 ##############################
@@ -1191,6 +1232,111 @@ def user_unblock(account_pk):
 
 
 
+##############################
+@app.put("/items/block/<item_pk>")
+def item_block(item_pk):
+    try:        
+
+        item_pk = x.validate_uuid4(item_pk)
+        item_blocked_at = int(time.time())
+
+        db, cursor = x.db()
+
+        # Fetch restaurant_email using the relationship between items and restaurants
+        q = """
+            SELECT r.restaurant_email 
+            FROM restaurants r
+            JOIN items i ON i.item_restaurant_fk = r.restaurant_pk
+            WHERE i.item_pk = %s
+        """
+        cursor.execute(q, (item_pk,))
+        restaurant = cursor.fetchone()
+
+        if not restaurant:
+            x.raise_custom_exception("Restaurant not found for the given item", 404)
+
+        restaurant_email = restaurant["restaurant_email"]
+
+        q = '''
+            UPDATE items 
+            SET item_blocked_at = %s 
+            WHERE item_pk = %s
+        '''
+        cursor.execute(q, (item_blocked_at, item_pk))
+
+        db.commit()
+
+        x.send_block_email(restaurant_email)
+
+        unblock_html = render_template("___btn_unblock.html", item_pk=item_pk)
+        toast = render_template("___toast.html", message = "User blocked")
+
+        return f"""
+                <template mix-target="#block-user-{ item_pk }" mix-replace>
+                    {unblock_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+##############################
+@app.put("/items/unblock/<item_pk>")
+def item_unblock(item_pk):
+    try:        
+
+        item_pk = x.validate_uuid4(item_pk)
+        item_blocked_at = 0
+
+        db, cursor = x.db()
+
+        q = '''
+            UPDATE items 
+            SET item_blocked_at = %s 
+            WHERE item_pk = %s
+        '''
+        cursor.execute(q, (item_blocked_at, item_pk))
+
+        db.commit()
+
+        block_html = render_template("___btn_block.html", item_pk=item_pk)
+        toast = render_template("___toast.html", message = "Item unblocked")
+        return f"""
+                <template mix-target="#unblock-user-{ item_pk }" mix-replace>
+                    {block_html}
+                </template>
+                <template mix-target="#toast" mix-top>
+                    {toast}
+                </template>                
+            """
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 ##############################
 ##############################
 ##############################

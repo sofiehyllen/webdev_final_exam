@@ -19,6 +19,8 @@
                 {% include "__header_customer.html"%}
             {% elif 'partner' in user.roles %}
                 {% include "__header_partner.html"%}
+            {% elif 'admin' in user.roles %}
+                {% include "__header_admin.html"%}
             {% endif %}
         </header>
         <div class="px-20">
