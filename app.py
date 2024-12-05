@@ -1298,7 +1298,7 @@ def delete_target(target_type, pk):
         queries = {
             "user": "SELECT user_pk, user_email FROM users WHERE user_pk = %s",
             "restaurant": "SELECT restaurant_pk, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
-            "item": "SELECT item_pk FROM items WHERE item_pk = %s"
+            "item": "SELECT item_pk, item_restaurant_fk FROM items WHERE item_pk = %s"
         }
 
         # Ensure the target type is valid
@@ -1312,16 +1312,34 @@ def delete_target(target_type, pk):
         if not result:
             x.raise_custom_exception(f"{target_type.capitalize()} not found", 404)
 
-        # Update the appropriate table with the deletion timestamp
-        update_queries = {
-            "user": "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s",
-            "restaurant": "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s",
-            "item": "UPDATE items SET item_deleted_at = %s WHERE item_pk = %s"
-        }
-        cursor.execute(update_queries[target_type], (deleted_at, pk))
+        
+        if target_type == "user":
+            email = result["user_email"]
+            q = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
+
+        elif target_type == "restaurant":
+            email = result["restaurant_email"]
+            q = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
+
+        elif target_type == "item":
+            restaurant_fk = result["item_restaurant_fk"]
+            cursor.execute("SELECT restaurant_email FROM restaurants WHERE restaurant_pk = %s", (restaurant_fk,))
+            restaurant = cursor.fetchone()
+            if not restaurant:
+                x.raise_custom_exception("Restaurant not found for the item", 404)
+            email = restaurant["restaurant_email"]  
+            q = "UPDATE items SET item_deleted_at = %s WHERE item_pk = %s"
+
+
+        cursor.execute(q, (deleted_at, pk))
         db.commit()
 
-        # Return a response indicating the item has been deleted
+        if target_type in ["user", "restaurant"]:
+            x.send_delete_email(email)  
+        if target_type == "item":
+            x.send_item_delete_email(email)  
+
+
         deleted_at_html = render_template("___deleted_at.html", deleted_at=deleted_at)
         toast = render_template("___toast.html", message=f"{target_type.capitalize()} deleted")
         return f"""
