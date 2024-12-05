@@ -277,3 +277,25 @@ def send_item_block_email(to_email):
     <p>Sincerely,<br>My company name</p>
     """
     return send_email(to_email, "Your menu item has been blocked", body)
+
+
+
+##############################
+def send_delete_email(to_email):
+    body = f"""
+    <p>Hello,</p>
+    <p>We contact you to inform you that your account has been deleted. If you have any questions, feel free to contact us.</p>
+    <p>Sincerely,<br>My company name</p>
+    """
+    return send_email(to_email, "Your account has been deleted", body)
+
+
+
+##############################
+def send_item_delete_email(to_email):
+    body = f"""
+    <p>Hello,</p>
+    <p>We contact you to inform you that one of your menu items has been deleted. If you have any questions, feel free to contact us.</p>
+    <p>Sincerely,<br>My company name</p>
+    """
+    return send_email(to_email, "Your menu item has been deleted", body)
