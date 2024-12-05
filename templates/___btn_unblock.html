@@ -1,10 +1,10 @@
 <td class="w-50">
-    <form id="unblock-user-{{ account_pk }}">
+    <form id="unblock-item-{{ pk }}">
         <button
             class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-            mix-put="/users/unblock/{{ account_pk }}"
-            mix-data="#unblock-user-{{ account_pk }}"
-            mix-target="#unblock-user-{{ account_pk }}">
+            mix-put="/unblock/item/{{ pk }}"
+            mix-data="#unblock-item-{{ pk }}"
+            mix-target="#unblock-item-{{ pk }}">
             Unblock
         </button>
     </form>

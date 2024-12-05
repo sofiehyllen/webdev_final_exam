@@ -1110,169 +1110,51 @@ def restaurant_update():
     
 
 
-##############################
-@app.put("/users/block/<account_pk>")
-def user_block(account_pk):
-    try:        
-
-        account_pk = x.validate_uuid4(account_pk)
-        account_blocked_at = int(time.time())
-
-        db, cursor = x.db()
-
-        q = 'SELECT account_email FROM accounts WHERE account_pk = %s'
-        cursor.execute(q, (account_pk,))
-        account = cursor.fetchone()
-        if not account: 
-            x.raise_custom_exception("user not found", 404)
-
-        account_email = account["account_email"]
-
-        q = '''
-            UPDATE users 
-            SET user_blocked_at = %s 
-            WHERE user_pk = %s
-        '''
-        cursor.execute(q, (account_blocked_at, account_pk))
-        if cursor.rowcount != 1: 
-            q = '''
-                UPDATE restaurants 
-                SET restaurant_blocked_at = %s 
-                WHERE restaurant_pk = %s
-            '''
-            cursor.execute(q, (account_blocked_at, account_pk))
-            if cursor.rowcount != 1:
-                x.raise_custom_exception("cannot block account", 400)
-
-        db.commit()
-
-        x.send_block_email(account_email)
-
-        unblock_html = render_template("___btn_unblock.html", account_pk=account_pk)
-        toast = render_template("___toast.html", message = "User blocked")
-
-        return f"""
-                <template mix-target="#block-user-{ account_pk }" mix-replace>
-                    {unblock_html}
-                </template>
-                <template mix-target="#toast" mix-top>
-                    {toast}
-                </template>                
-            """
-    
-    except Exception as ex:
-        ic(ex)
-        if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): 
-            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
-        if isinstance(ex, x.mysql.connector.Error):
-            ic(ex)
-            return "<template>Database error</template>", 500        
-        return "<template>System under maintenance</template>", 500  
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
 
 
-##############################
-@app.put("/users/unblock/<account_pk>")
-def user_unblock(account_pk):
+@app.put("/block/<target_type>/<pk>")
+def block_target(target_type, pk):
     try:
-
-        account_pk = x.validate_uuid4(account_pk)
-        account_blocked_at = 0
-
-        db, cursor = x.db()
-
-        q = '''
-            UPDATE users 
-            SET user_blocked_at = %s 
-            WHERE user_pk = %s
-        '''
-        cursor.execute(q, (account_blocked_at, account_pk))
-        
-        # If no rows are affected, try the 'restaurants' table
-        if cursor.rowcount != 1:
-            q = '''
-                UPDATE restaurants 
-                SET restaurant_blocked_at = %s 
-                WHERE restaurant_pk = %s
-            '''
-            cursor.execute(q, (account_blocked_at, account_pk))
-            if cursor.rowcount != 1:
-                x.raise_custom_exception("cannot unblock account", 400)
-        
-        db.commit()
-
-        block_html = render_template("___btn_block.html", account_pk=account_pk)
-        toast = render_template("___toast.html", message = "User unblocked")
-        return f"""
-                <template mix-target="#unblock-user-{ account_pk }" mix-replace>
-                    {block_html}
-                </template>
-                <template mix-target="#toast" mix-top>
-                    {toast}
-                </template>                
-            """
-    
-    except Exception as ex:
-
-        ic(ex)
-        if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): 
-            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
-        if isinstance(ex, x.mysql.connector.Error):
-            ic(ex)
-            return "<template>Database error</template>", 500        
-        return "<template>System under maintenance</template>", 500  
-    
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
-
-
-
-##############################
-@app.put("/items/block/<item_pk>")
-def item_block(item_pk):
-    try:        
-
-        item_pk = x.validate_uuid4(item_pk)
-        item_blocked_at = int(time.time())
+        # Validate UUID
+        pk = x.validate_uuid4(pk)
+        blocked_at = int(time.time())
 
         db, cursor = x.db()
 
-        # Fetch restaurant_email using the relationship between items and restaurants
-        q = """
-            SELECT r.restaurant_email 
-            FROM restaurants r
-            JOIN items i ON i.item_restaurant_fk = r.restaurant_pk
-            WHERE i.item_pk = %s
-        """
-        cursor.execute(q, (item_pk,))
-        restaurant = cursor.fetchone()
+        # Fetch all relevant records
+        queries = {
+            "user": "SELECT user_pk FROM users WHERE user_pk = %s",
+            "restaurant": "SELECT restaurant_pk FROM restaurants WHERE restaurant_pk = %s",
+            "item": "SELECT item_pk FROM items WHERE item_pk = %s"
+        }
 
-        if not restaurant:
-            x.raise_custom_exception("Restaurant not found for the given item", 404)
+        if target_type not in queries:
+            x.raise_custom_exception("Invalid target type", 400)
+                    # Execute the query to check if the PK exists in the corresponding table
+        cursor.execute(queries[target_type], (pk,))
+        result = cursor.fetchone()  # Fetch single record
 
-        restaurant_email = restaurant["restaurant_email"]
+        if not result:
+            x.raise_custom_exception(f"{target_type.capitalize()} not found", 404)
 
-        q = '''
-            UPDATE items 
-            SET item_blocked_at = %s 
-            WHERE item_pk = %s
-        '''
-        cursor.execute(q, (item_blocked_at, item_pk))
+        # Determine the appropriate update query based on target_type
+        if target_type == "user":
+            q = "UPDATE users SET user_blocked_at = %s WHERE user_pk = %s"
+        elif target_type == "restaurant":
+            q = "UPDATE restaurants SET restaurant_blocked_at = %s WHERE restaurant_pk = %s"
+        elif target_type == "item":
+            q = "UPDATE items SET item_blocked_at = %s WHERE item_pk = %s"
 
+        # Execute the update
+        cursor.execute(q, (blocked_at, pk))
         db.commit()
 
-        x.send_block_email(restaurant_email)
-
-        unblock_html = render_template("___btn_unblock.html", item_pk=item_pk)
-        toast = render_template("___toast.html", message = "User blocked")
+        # Render response templates
+        unblock_html = render_template("___btn_unblock.html", pk=pk, target_type=target_type)
+        toast = render_template("___toast.html", message=f"{target_type.capitalize()} blocked")
 
         return f"""
-                <template mix-target="#block-user-{ item_pk }" mix-replace>
+                <template mix-target="#block-{target_type}-{pk}" mix-replace>
                     {unblock_html}
                 </template>
                 <template mix-target="#toast" mix-top>
@@ -1294,37 +1176,61 @@ def item_block(item_pk):
         if "db" in locals(): db.close()
 
 
-
-##############################
-@app.put("/items/unblock/<item_pk>")
-def item_unblock(item_pk):
-    try:        
-
-        item_pk = x.validate_uuid4(item_pk)
-        item_blocked_at = 0
+@app.put("/unblock/<target_type>/<pk>")
+def unblock_target(target_type, pk):
+    try:
+        pk = x.validate_uuid4(pk)
 
         db, cursor = x.db()
 
-        q = '''
-            UPDATE items 
-            SET item_blocked_at = %s 
-            WHERE item_pk = %s
-        '''
-        cursor.execute(q, (item_blocked_at, item_pk))
+        if target_type == "user":
+            q = '''
+                UPDATE users 
+                SET user_blocked_at = 0
+                WHERE user_pk = %s
+            '''
+            cursor.execute(q, (pk,))
+            if cursor.rowcount != 1:
+                x.raise_custom_exception("Cannot unblock user", 400)
+
+
+        elif target_type == "restaurant":
+            q = '''
+                UPDATE restaurants 
+                SET restaurant_blocked_at = 0
+                WHERE restaurant_pk = %s
+            '''
+            cursor.execute(q, (pk,))
+            if cursor.rowcount != 1:
+                x.raise_custom_exception("Cannot unblock restaurant", 400)
+
+        elif target_type == "item":
+            q = '''
+                UPDATE items 
+                SET item_blocked_at = 0
+                WHERE item_pk = %s
+            '''
+            cursor.execute(q, (pk,))
+            if cursor.rowcount != 1:
+                x.raise_custom_exception("Cannot unblock item", 400)
+
+        else:
+            x.raise_custom_exception("Invalid target type", 400)
 
         db.commit()
 
-        block_html = render_template("___btn_block.html", item_pk=item_pk)
-        toast = render_template("___toast.html", message = "Item unblocked")
+        block_html = render_template("___btn_block.html", pk=pk, target_type=target_type)
+        toast = render_template("___toast.html", message=f"{target_type.capitalize()} blocked")
+
         return f"""
-                <template mix-target="#unblock-user-{ item_pk }" mix-replace>
+                <template mix-target="#unblock-{target_type}-{pk}" mix-replace>
                     {block_html}
                 </template>
                 <template mix-target="#toast" mix-top>
                     {toast}
                 </template>                
             """
-    
+
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
@@ -1337,6 +1243,11 @@ def item_unblock(item_pk):
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
+
+
 ##############################
 ##############################
 ##############################
