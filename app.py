@@ -477,13 +477,7 @@ def _________POST_________(): pass
 
 @app.post("/logout")
 def logout():
-    # ic("#"*30)
-    # ic(session)
     session.pop("account", None)
-    # session.clear()
-    # session.modified = True
-    # ic("*"*30)
-    # ic(session)
     return redirect(url_for("view_login"))
 
 
@@ -1366,10 +1360,8 @@ def delete_target(target_type, pk):
 
 
 
-
-##############################
 @app.delete("/users/delete/<account_pk>")
-def user_delete(account_pk):
+def delete_user(account_pk):
     try:
         account_pk = x.validate_uuid4(account_pk)
         account_deleted_at = int(time.time())
@@ -1378,10 +1370,12 @@ def user_delete(account_pk):
 
         account_roles = session.get("account").get("roles")
 
-        if account_roles in ["customer", "partner"]:
+        # Check if roles contain either "customer" or "partner"
+        if "customer" in account_roles or "partner" in account_roles:
             q_users = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
             cursor.execute(q_users, (account_deleted_at, account_pk))
-        elif account_roles == "restaurant":
+        # Handle the restaurant role
+        elif "restaurant" in account_roles:
             q_restaurants = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
             cursor.execute(q_restaurants, (account_deleted_at, account_pk))
         else:
@@ -1389,9 +1383,9 @@ def user_delete(account_pk):
 
         db.commit()
 
-        return f"""
-                <template mix-target="" mix-bottom>
-                </template>"""
+        session.pop("account", None)
+        
+        return redirect(url_for("view_login")) # Verify if this part is correct for your front-end logic.
     
     except Exception as ex:
         ic(ex)
@@ -1406,6 +1400,7 @@ def user_delete(account_pk):
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 
 ##############################
