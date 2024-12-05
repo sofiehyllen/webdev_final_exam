@@ -23,7 +23,7 @@
                 <form id="block-user-{{ account.account_pk }}">
                     <button
                         class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                        mix-put="/users/block/{{ account.account_pk }}"
+                        mix-put="/block/user/{{ account.account_pk }}"
                         mix-data="#block-user-{{ account.account_pk }}"
                         mix-target="#block-user-{{ account.account_pk }}">
                         Block
@@ -33,7 +33,7 @@
                 <form id="unblock-user-{{ account.account_pk }}">
                     <button
                         class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-                        mix-put="/users/unblock/{{ account.account_pk }}"
+                        mix-put="/unblock/user/{{ account.account_pk }}"
                         mix-data="#unblock-user-{{ account.account_pk }}"
                         mix-target="#unblock-user-{{ account.account_pk }}">
                         Unblock
@@ -76,24 +76,24 @@
         <tr class="border-b">
             <td class="py-2 px-4">{{ account.account_name }}</td>
             <td class="py-2 px-4">{{ account.account_email }}</td>
-            <td id="block-unblock-user-btn-{{ account.account_pk }}" class="py-2 px-4">
+            <td id="block-unblock-restaurant-btn-{{ account.account_pk }}" class="py-2 px-4">
                 {% if not account.account_blocked_at %}
-                <form id="block-user-{{ account.account_pk }}">
+                <form id="block-restaurant-{{ account.account_pk }}">
                     <button
                         class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                        mix-put="/users/block/{{ account.account_pk }}"
-                        mix-data="#block-user-{{ account.account_pk }}"
-                        mix-target="#block-user-{{ account.account_pk }}">
+                        mix-put="/block/restaurant/{{ account.account_pk }}"
+                        mix-data="#block-restaurant-{{ account.account_pk }}"
+                        mix-target="#block-restaurant-{{ account.account_pk }}">
                         Block
                     </button>
                 </form>
                 {% else %}
-                <form id="unblock-user-{{ account.account_pk }}">
+                <form id="unblock-restaurant-{{ account.account_pk }}">
                     <button
                         class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-                        mix-put="/users/unblock/{{ account.account_pk }}"
-                        mix-data="#unblock-user-{{ account.account_pk }}"
-                        mix-target="#unblock-user-{{ account.account_pk }}">
+                        mix-put="/unblock/restaurant/{{ account.account_pk }}"
+                        mix-data="#unblock-restaurant-{{ account.account_pk }}"
+                        mix-target="#unblock-restaurant-{{ account.account_pk }}">
                         Unblock
                     </button>
                 </form>
