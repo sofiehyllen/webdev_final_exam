@@ -40,13 +40,13 @@
                 </form>
                 {% endif %}
             </td>
-            <td class="py-2 px-4"">
+            <td class="py-2 px-4" id="delete-item-{{ item.item_pk }}">
                 {% if item.item_deleted_at == 0 %}
                 <button
                     class=""
                     title="Delete Item"
-                    
-                    >
+                    mix-delete="/admin/delete/item/{{ item.item_pk }}"
+                    mix-target="#delete-item-{{ item.item_pk }}">
                     🗑️
                 </button>
                 {% else %}
