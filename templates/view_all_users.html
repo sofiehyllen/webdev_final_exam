@@ -41,13 +41,13 @@
                 </form>
                 {% endif %}
             </td>
-            <td class="py-2 px-4" id="delete-user-btn-{{ account.account_pk }}">
+            <td class="py-2 px-4" id="delete-user-{{ account.account_pk }}">
                 {% if account.account_deleted_at == 0 %}
                 <button
                     class=""
                     title="Delete User"
-                    mix-delete="/admin/users/delete/{{account['account_pk']}}"
-                    mix-target="#delete-user-btn-{{ account.account_pk }}">
+                    mix-delete="/admin/delete/user/{{ account.account_pk }}"
+                    mix-target="#delete-user-{{ account.account_pk }}">
                     🗑️
                 </button>
                 {% else %}
@@ -99,13 +99,13 @@
                 </form>
                 {% endif %}
             </td>
-            <td id="delete-user-btn-{{ account.account_pk }}">
+            <td id="delete-restaurant-{{ account.account_pk }}">
                 {% if account.account_deleted_at == 0 %}
                 <button
                     class=""
                     title="Delete User"
-                    mix-delete="/admin/users/delete/{{account['account_pk']}}"
-                    mix-target="#delete-user-btn-{{ account.account_pk }}">
+                    mix-delete="/admin/delete/restaurant/{{ account.account_pk }}"
+                    mix-target="#delete-restaurant-{{ account.account_pk }}">
                     🗑️
                 </button>
                 {% else %}

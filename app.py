@@ -1259,69 +1259,77 @@ def _________DELETE_________(): pass
 ##############################
 
 
-@app.delete("/admin/users/delete/<account_pk>")
-def admin_user_delete(account_pk):
+
+##############################
+@app.delete("/admin/delete/<target_type>/<pk>")
+def delete_target(target_type, pk):
     try:
-        if not session.get("account", ""): return redirect(url_for("view_login"))
-        if not "admin" in session.get("account").get("roles"): return redirect(url_for("view_login"))
+        # Check for user session and admin role
+        account = session.get("account")
+        if not account or "admin" not in account.get("roles", []):
+            return redirect(url_for("view_login"))
 
-        account_pk = x.validate_uuid4(account_pk)
-        account_deleted_at = int(time.time())
+        pk = x.validate_uuid4(pk)  # Validate the primary key (UUID)
+        deleted_at = int(time.time())  # Get the current timestamp for deletion
 
-        db, cursor = x.db()
+        db, cursor = x.db()  # Open database connection
 
-        query = "SELECT account_roles FROM accounts WHERE account_pk = %s"
-        cursor.execute(query, (account_pk,))
-        row = cursor.fetchone()
-        ic(row)
-        if not row: 
-            x.raise_custom_exception("Account not found", 400)
-        else: 
-            account_roles = row["account_roles"]
+        # Queries for different target types
+        queries = {
+            "user": "SELECT user_pk FROM users WHERE user_pk = %s",
+            "restaurant": "SELECT restaurant_pk FROM restaurants WHERE restaurant_pk = %s",
+            "item": "SELECT item_pk FROM items WHERE item_pk = %s"
+        }
 
-        if account_roles in ["customer", "partner"]:
-            q_users = "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s"
-            cursor.execute(q_users, (account_deleted_at, account_pk))
-        elif account_roles == "restaurant":
-            q_restaurants = "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s"
-            cursor.execute(q_restaurants, (account_deleted_at, account_pk))
+        # Ensure the target type is valid
+        if target_type not in queries:
+            x.raise_custom_exception("Invalid target type", 400)
 
-        else:
-            x.raise_custom_exception("Invalid account role. No update performed.", 400)
+        # Execute the query to check if the PK exists
+        cursor.execute(queries[target_type], (pk,))
+        result = cursor.fetchone()
 
+        if not result:
+            x.raise_custom_exception(f"{target_type.capitalize()} not found", 404)
+
+        # Update the appropriate table with the deletion timestamp
+        update_queries = {
+            "user": "UPDATE users SET user_deleted_at = %s WHERE user_pk = %s",
+            "restaurant": "UPDATE restaurants SET restaurant_deleted_at = %s WHERE restaurant_pk = %s",
+            "item": "UPDATE items SET item_deleted_at = %s WHERE item_pk = %s"
+        }
+        cursor.execute(update_queries[target_type], (deleted_at, pk))
         db.commit()
 
-        deleted_at_html = render_template(
-            "___deleted_at.html", account_deleted_at=account_deleted_at
-        )
-
-        toast = render_template("___toast.html", message = "User deleted")
+        # Return a response indicating the item has been deleted
+        deleted_at_html = render_template("___deleted_at.html", deleted_at=deleted_at)
+        toast = render_template("___toast.html", message=f"{target_type.capitalize()} deleted")
         return f"""
-                <template mix-target="#delete-user-btn-{account_pk}" mix-replace>
+                <template mix-target="#delete-{target_type}-{pk}" mix-replace>
                     {deleted_at_html}
                 </template>
-                <template mix-target="#toast" mix-bottom>
+                <template mix-target="#toast" mix-top>
                     {toast}
                 </template>                
             """
-    
-    except Exception as ex:
 
+    except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
-        if isinstance(ex, x.CustomException): 
-            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.CustomException):
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code
         if isinstance(ex, x.mysql.connector.Error):
             ic(ex)
-            return "<template>Database error</template>", 500        
-        return "<template>System under maintenance</template>", 500  
-    
+            return "<template>Database error</template>", 500
+        return "<template>System under maintenance</template>", 500
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
 
 
+
+##############################
 @app.delete("/users/delete/<account_pk>")
 def user_delete(account_pk):
     try:
