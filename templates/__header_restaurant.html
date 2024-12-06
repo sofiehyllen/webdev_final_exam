@@ -3,7 +3,8 @@
     <a class="text-3xl font-semibold" href="/{{ user.roles[0] }}">Wolt</a>
   </div>
   <div class="flex justify-center w-1/3 gap-4">
-      <button><a href="{{ url_for('view_restaurant_create_item')}}">Create item</a></button>
+    <button><a href="{{ url_for('view_create_item')}}">Create item</a></button>
+    <button><a href="{{ url_for('view_my_items')}}">My menu</a></button>
   </div>
   <div class="flex gap-3 w-1/3 justify-end pr-20">
     <div class="relative dropdown-container">

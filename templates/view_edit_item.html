@@ -1,0 +1,65 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full flex flex-col items-center px-4">
+    <form action="PUT" id="edit-item-frm" class="pt-6 w-full max-w-md flex flex-col gap-6 mx-auto shadow-lg p-10 rounded-md mt-20">
+        <h1 class="text-2xl font-bold">Edit Item</h1>
+        <div class="flex flex-col">
+            <label for="item_title" class="text-sm  text-gray-500 mb-1">
+                Title:
+            </label>
+            <input
+                type="text"
+                name="item_title"
+                value="{{ item.item_title }}"
+                mix-check="{{ x.NAME_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+          <label for="item_description">
+              <span>Description</span>
+          </label>
+          <textarea
+              name="item_description"
+              rows="4"
+              cols="50"
+              mix-check="{{ x.DESCRIPTION_REGEX }}">{{ item.item_description }}</textarea>
+        </div>
+
+        <div class="flex flex-col">
+          <label for="item_price">
+              <span>Price</span>
+          </label>
+          <input type="number" name="item_price" value="{{ item.item_price }}" mix-check="{{ x.PRICE_REGEX }}" />
+        </div>
+
+        <div class="flex flex-col">
+          <label for="item_image_name">
+              <span>Image</span>
+          </label>
+          <input
+              type="file"
+              name="item_image_name"
+              id="item_image_name"
+              accept=".png, .jpg, .jpeg, .gif"
+              multiple />
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          {% for image in item.images %}
+          <div class="w-32 h-16 overflow-hidden flex justify-center items-center rounded-md">
+            <img src="{{ url_for('static', filename='item_images/' + image) }}" alt="Item Image" class="h-full w-full object-cover"/>
+          </div>
+          {% endfor %}
+        </div>
+
+        <button
+            type="submit"
+            mix-put="/restaurant/item/{{ item.item_pk }}"
+            mix-data="#edit-item-frm"
+            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+            Save
+        </button>
+    </form>
+</main>
+
+{% include "_bottom.html" %}

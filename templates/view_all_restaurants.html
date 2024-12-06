@@ -6,7 +6,7 @@
     <div class="flex flex-col items-center">
         <div class="flex flex-wrap justify-center items-center gap-5">
             {% for restaurant in restaurants %}
-            <a href="/customer/restaurant/{{ restaurant.restaurant_pk }}" class="block h-30 w-1/4 min-w-60 max-w-96">
+            <a href="/customer/restaurant/{{ restaurant.restaurant_pk }}" class="block h-30 max-w-96 min-w-80">
                 <article class="flex p-3 shadow-md rounded-lg h-full w-full justify-between">
                     <div class="w-2/3 flex flex-col justify-between">
                         <p class="font-semibold m-0">{{ restaurant.restaurant_name }}</p>

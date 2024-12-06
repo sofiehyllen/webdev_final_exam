@@ -217,7 +217,7 @@ def view_customer_restaurant_items(restaurant_pk):
         items = cursor.fetchall()
 
 
-        return render_template("view_restaurant_items.html", user=user, restaurant=restaurant, items=items)
+        return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items)
     
     except Exception as ex:
         ic(ex)
@@ -344,9 +344,10 @@ def view_restaurant():
 
 
 
+##############################
 @app.get("/restaurant/create-item")
 @x.no_cache
-def view_restaurant_create_item():
+def view_create_item():
     if not session.get("account", ""): 
         return redirect(url_for("view_login"))
     user = session.get("account")
@@ -354,7 +355,55 @@ def view_restaurant_create_item():
         return redirect(url_for("view_choose_role"))
     if not "restaurant" in user.get("roles", ""):
         return redirect(url_for("view_login"))  
-    return render_template("view_restaurant_create_item.html", user=user, x=x)
+    return render_template("view_create_item.html", user=user, x=x)
+
+
+
+##############################
+@app.get("/restaurant/my-items")
+@x.no_cache
+def view_my_items():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    if not "restaurant" in user.get("roles", ""):
+        return redirect(url_for("view_login"))  
+    
+    restaurant_pk = user.get("account_pk", "")
+    if not restaurant_pk:
+        return redirect(url_for("view_login"))  
+
+    items = get_items_for_restaurant(restaurant_pk)
+
+    return render_template("view_my_items.html", user=user, x=x, items=items)
+
+def get_items_for_restaurant(restaurant_pk):
+    try:
+        db, cursor = x.db()
+        q = '''
+            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
+            ii.item_image_name
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND i.item_restaurant_fk = %s
+        '''
+        cursor.execute(q, (restaurant_pk,))
+        items = cursor.fetchall()
+
+        return items
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 
@@ -1102,6 +1151,151 @@ def restaurant_update():
             if "cursor" in locals(): cursor.close()
             if "db" in locals(): db.close()
     
+
+@app.get("/restaurant/item/<item_pk>")
+def view_edit_item(item_pk):
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+    
+        user = session.get("account")
+        if not "restaurant" in user.get("roles", ""):
+            return redirect(url_for("view_login"))  
+        restaurant_pk = user.get("account_pk", "")
+        if not restaurant_pk:
+            return redirect(url_for("view_login"))
+        
+        item = get_item_for_edit(item_pk)
+        if isinstance(item, tuple):
+            return item
+
+
+        return render_template("view_edit_item.html", item=item, user=user, x=x)
+
+def get_item_for_edit(item_pk):
+    try:
+        db, cursor = x.db()
+
+        q = """
+            SELECT item_pk, item_title, item_description, item_price, item_restaurant_fk, item_images.item_image_name
+            FROM items
+            LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk
+            WHERE item_pk = %s
+            """
+        cursor.execute(q, (item_pk,))
+        rows = cursor.fetchall()
+
+        if not rows:
+            return "Item not found", 404
+
+        item = rows[0]
+        item['images'] = [row['item_image_name'] for row in rows]
+
+        return item
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return f"<template>Database error: {str(ex)} </template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+@app.put("/restaurant/item/<item_pk>")
+def item_update(item_pk):
+    try:
+        item_title = x.validate_account_name("item_title")
+        item_description = x.validate_item_description()
+        item_price = x.validate_item_price()
+        item_image_name = request.files.getlist("item_image_name") 
+        valid_files = [file for file in item_image_name if file and file.filename.strip()]
+        item_updated_at = int(time.time())
+
+        restaurant_pk = session.get("account").get("account_pk")
+
+        db, cursor = x.db()
+
+        q = """
+            SELECT i.item_title, i.item_description, i.item_price, ii.item_image_name
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_pk = %s AND i.item_restaurant_fk = %s
+        """
+        cursor.execute(q, (item_pk, restaurant_pk))
+        rows = cursor.fetchall()
+
+        current_item = {
+            "item_title": rows[0]["item_title"] if rows else None,
+            "item_description": rows[0]["item_description"] if rows else None,
+            "item_price": str(rows[0]["item_price"]) if rows else None,
+            "images": [row["item_image_name"] for row in rows if row["item_image_name"]]
+        }
+
+        ic(item_title, item_description, item_price)  # Log input data
+        ic(current_item)  # Log current item data
+
+        # Comparing current values with new ones, accounting for potential formatting issues
+        if (
+            current_item["item_title"].strip() == item_title.strip() and
+            current_item["item_description"].strip() == item_description.strip() and
+            str(current_item["item_price"]) == str(item_price).strip() and
+            not valid_files):
+
+            toast = render_template("___toast.html", message="No changes made")
+            return f"""<template mix-target="#toast">{toast}</template>"""
+
+        # Log the update query parameters
+        ic(item_title, item_description, item_price, item_updated_at, item_pk, restaurant_pk)
+
+        q = """
+            UPDATE items
+            SET item_title = %s, item_description = %s, item_price = %s, item_updated_at = %s
+            WHERE item_pk = %s AND item_restaurant_fk = %s
+        """
+        cursor.execute(q, (item_title, item_description, item_price, item_updated_at, item_pk, restaurant_pk))
+        ic(cursor.rowcount)  # Check how many rows were updated
+
+        if valid_files:
+            for file in valid_files:
+                file_extension = os.path.splitext(file.filename)[1][1:]
+                if file_extension not in x.ALLOWED_FILE_EXTENSIONS:
+                    x.raise_custom_exception("File invalid type", 400)
+
+                filename = f"{uuid.uuid4()}.{file_extension}"
+                file.save(os.path.join(x.UPLOAD_ITEM_FOLDER, filename))
+                image_q = '''
+                    INSERT INTO item_images (item_image_pk, item_image_item_fk, item_image_name)
+                    VALUES (%s, %s, %s)
+                '''
+                cursor.execute(image_q, (str(uuid.uuid4()), item_pk, filename))
+                
+        db.commit()
+
+        toast = render_template("___toast.html", message="Profile has been updated")
+        return f"""<template mix-target="#toast" mix-bottom>{toast}</template>"""
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code
+        
+        if isinstance(ex, x.mysql.connector.Error):
+            if "users.user_email" in str(ex): 
+                return "<template>email not available</template>", 400
+            return "<template>System upgrading</template>", 500        
+        
+        return "<template>System under maintenance</template>", 500    
+
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 
