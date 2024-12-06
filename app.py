@@ -432,7 +432,7 @@ def get_item_for_edit(item_pk):
         db, cursor = x.db()
 
         q = """
-            SELECT item_pk, item_title, item_description, item_price, item_restaurant_fk, item_images.item_image_name
+            SELECT item_pk, item_title, item_description, item_price, item_restaurant_fk, item_images.item_image_name, item_images.item_image_pk
             FROM items
             LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk
             WHERE item_pk = %s
@@ -444,7 +444,10 @@ def get_item_for_edit(item_pk):
             return "Item not found", 404
 
         item = rows[0]
-        item['images'] = [row['item_image_name'] for row in rows]
+        item['images'] = [{
+            'item_image_pk': row['item_image_pk'], 
+            'item_image_name': row['item_image_name']
+        } for row in rows]
 
         return item
     
@@ -1559,7 +1562,7 @@ def delete_target(target_type, pk):
 
 
 
-
+##############################
 @app.delete("/users/delete/<account_pk>")
 def delete_user(account_pk):
     try:
@@ -1624,6 +1627,61 @@ def delete_user(account_pk):
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+
+
+
+##############################
+@app.delete("/restaurant/delete/item-image/<item_pk>/<item_image_pk>")
+def delete_item_image(item_pk, item_image_pk):
+    try:
+        db, cursor = x.db()
+
+        q = """
+            SELECT item_image_name
+            FROM item_images
+            WHERE item_image_pk = %s AND item_image_item_fk = %s
+        """
+        cursor.execute(q, (item_image_pk, item_pk))
+        row = cursor.fetchone()
+
+        if row is None:
+            return "<template>Image not found or unauthorized</template>", 404
+
+        # Get the image filename
+        image_filename = row["item_image_name"]
+
+        # Remove the image file from the server's filesystem
+        file_path = os.path.join(x.UPLOAD_ITEM_FOLDER, image_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        
+        # Delete the image record from the database
+        delete_q = """
+            DELETE FROM item_images
+            WHERE item_image_pk = %s
+        """
+        cursor.execute(delete_q, (item_image_pk,))
+
+        # Commit the changes
+        db.commit()
+
+        # Send a response indicating success
+        toast = render_template("___toast.html", message="Image deleted successfully")
+        return f"""<template mix-target="#toast">{toast}</template>"""
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 
