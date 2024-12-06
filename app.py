@@ -1369,6 +1369,9 @@ def delete_user(account_pk):
 
         # Get the password from the X-Delete-Password header
         provided_password = request.headers.get("X-User-Confirmation")
+        if not provided_password or provided_password.strip() == "":
+            x.raise_custom_exception("Password missing", 404)
+            
 
         account_deleted_at = int(time.time())
 
@@ -1385,8 +1388,7 @@ def delete_user(account_pk):
         
         # Check if the provided password matches the stored password hash
         if not check_password_hash(stored_password_hash, provided_password):
-            toast = render_template("___toast.html", message="Password incorrect")
-            return f"<template mix-target='#toast' mix-top>{toast}</template>"
+            x.raise_custom_exception("Password incorrect", 404)
 
         account_roles = session.get("account").get("roles")
 
@@ -1404,7 +1406,7 @@ def delete_user(account_pk):
         db.commit()
 
         session.pop("account", None)
-        
+
         email = result["account_email"]
         x.send_delete_email(email)
 
@@ -1414,7 +1416,7 @@ def delete_user(account_pk):
         ic(ex)
         if "db" in locals(): db.rollback()
         if isinstance(ex, x.CustomException): 
-            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+            return f"""<template>{ex.message}</template>""", ex.code        
         if isinstance(ex, x.mysql.connector.Error):
             ic(ex)
             return "<template>Database error</template>", 500        
