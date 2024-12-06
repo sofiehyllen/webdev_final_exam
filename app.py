@@ -1360,13 +1360,35 @@ def delete_target(target_type, pk):
 
 
 
+
+
 @app.delete("/users/delete/<account_pk>")
 def delete_user(account_pk):
     try:
         account_pk = x.validate_uuid4(account_pk)
+
+        # Get the password from the X-Delete-Password header
+        provided_password = request.headers.get("X-User-Confirmation")
+        if not provided_password or provided_password.strip() == "":
+            x.raise_custom_exception("Password missing", 404)
+            
+
         account_deleted_at = int(time.time())
 
         db, cursor = x.db()
+
+        q = "SELECT account_password, account_email FROM accounts WHERE account_pk = %s"
+        cursor.execute(q, (account_pk,))
+        result = cursor.fetchone()
+
+        if not result:
+            x.raise_custom_exception("User not found.", 404)
+
+        stored_password_hash = result["account_password"]
+        
+        # Check if the provided password matches the stored password hash
+        if not check_password_hash(stored_password_hash, provided_password):
+            x.raise_custom_exception("Password incorrect", 404)
 
         account_roles = session.get("account").get("roles")
 
@@ -1384,22 +1406,26 @@ def delete_user(account_pk):
         db.commit()
 
         session.pop("account", None)
-        
+
+        email = result["account_email"]
+        x.send_delete_email(email)
+
         return """<template mix-redirect="/login"></template>"""
-    
+
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
         if isinstance(ex, x.CustomException): 
-            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+            return f"""<template>{ex.message}</template>""", ex.code        
         if isinstance(ex, x.mysql.connector.Error):
             ic(ex)
             return "<template>Database error</template>", 500        
         return "<template>System under maintenance</template>", 500  
-    
+
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 
 
