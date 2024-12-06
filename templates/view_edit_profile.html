@@ -52,8 +52,10 @@
             <form>
                 <p class="text-2xl font-semibold mb-4">Are you sure you want to delete your account?</p>
                 <p class="text-sm mb-8">This action cannot be reversed</p>
-                <label for="delete-password">Password</label>
-                <input name="delete-password-input" type="password" id="delete-password-input" placeholder="Enter your password" class="w-full mb-4 p-2 border border-gray-300 rounded-lg" mix-check="{{ x.PASSWORD_REGEX }}">
+                <div class="flex flex-col mb-5">
+                    <label class="text-sm  text-gray-500 mb-1" for="delete-password">Password</label>
+                    <input name="delete-password-input" type="password" id="delete-password-input" mix-check="{{ x.PASSWORD_REGEX }}" class="">
+                </div>
     
                 <div class="flex gap-3">
                     <button id="confirm-delete-btn" mix-delete="/users/delete/{{ user.account_pk }}" class="bg-red-500 w-1/2 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 ease-in-out">
