@@ -1360,11 +1360,16 @@ def delete_target(target_type, pk):
 
 
 
+
+
 @app.delete("/users/delete/<account_pk>")
 def delete_user(account_pk):
     try:
         account_pk = x.validate_uuid4(account_pk)
-        provided_password = x.validate_account_password("user_password")
+
+        # Get the password from the X-Delete-Password header
+        provided_password = request.headers.get("X-Delete-Password")
+
         account_deleted_at = int(time.time())
 
         db, cursor = x.db()
@@ -1378,10 +1383,10 @@ def delete_user(account_pk):
 
         stored_password_hash = result["account_password"]
         
+        # Check if the provided password matches the stored password hash
         if not check_password_hash(stored_password_hash, provided_password):
             toast = render_template("___toast.html", message="Password incorrect")
-            return f"<template mix-target='#toast' mix-top>{toast}</template>" 
-
+            return f"<template mix-target='#toast' mix-top>{toast}</template>"
 
         account_roles = session.get("account").get("roles")
 
@@ -1399,9 +1404,9 @@ def delete_user(account_pk):
         db.commit()
 
         session.pop("account", None)
-        
+
         return """<template mix-redirect="/login"></template>"""
-    
+
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
@@ -1411,10 +1416,11 @@ def delete_user(account_pk):
             ic(ex)
             return "<template>Database error</template>", 500        
         return "<template>System under maintenance</template>", 500  
-    
+
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
 
 
 
