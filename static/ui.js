@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const password = deletePasswordInput.value.trim();  // Get the entered password
 
         if (!password) {
-            console.log("Please enter your password to confirm deletion.");
+            deletePasswordInput.classList.add("bg-red-200")
             return;
         }
 
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(html => {
             // Check if the response contains a redirect template
             if (html.includes('<template mix-redirect="/login"></template>')) {
-                console.log("Your account has been deleted.");
+                window.location.reload();
             } else {
                 console.log("An error occurred during account deletion.");
             }
