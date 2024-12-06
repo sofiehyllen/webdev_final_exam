@@ -56,17 +56,19 @@
           {% endfor %}
         </div>
 
-        <button
-            type="submit"
-            mix-put="/restaurant/item/{{ item.item_pk }}"
-            mix-data="#edit-item-frm"
-            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
-            Save
+        <div class="flex flex-col gap-2">
+          <button
+              type="submit"
+              mix-put="/restaurant/item/{{ item.item_pk }}"
+              mix-data="#edit-item-frm"
+              class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+              Save
+          </button>
+          <button class="open-delete-modal-btn bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 ease-in-out">
+            Delete
         </button>
+        </div>
     </form>
-    <button class="open-delete-modal-btn bg-red-500 mt-20 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 ease-in-out">
-      Delete item
-  </button>
   <div class="delete-modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center hidden">
       <div class="bg-white p-8 rounded-lg shadow-lg w-96">
           <form>
