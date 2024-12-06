@@ -64,6 +64,26 @@
             Save
         </button>
     </form>
+    <button class="open-delete-modal-btn bg-red-500 mt-20 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 ease-in-out">
+      Delete item
+  </button>
+  <div class="delete-modal fixed inset-0 bg-black bg-opacity-50 justify-center items-center hidden">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+          <form>
+              <p class="text-2xl font-semibold mb-4">Are you sure you want to delete this item?</p>
+              <p class="text-sm mb-8">This action cannot be reversed</p>
+              <div class="flex gap-3">
+                  <button class=" bg-red-500 w-1/2 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 ease-in-out" 
+                          mix-delete="/restaurant/delete/item/{{ item.item_pk }}">
+                      Delete
+                  </button>
+                  <button class="cancel-delete-btn bg-gray-200 w-1/2 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200 ease-in-out">
+                      Cancel
+                  </button>            
+              </div>
+          </form>
+      </div>
+  </div>
 </main>
 
 {% include "_bottom.html" %}
