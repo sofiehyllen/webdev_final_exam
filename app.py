@@ -1368,13 +1368,13 @@ def delete_user(account_pk):
         account_pk = x.validate_uuid4(account_pk)
 
         # Get the password from the X-Delete-Password header
-        provided_password = request.headers.get("X-Delete-Password")
+        provided_password = request.headers.get("X-User-Confirmation")
 
         account_deleted_at = int(time.time())
 
         db, cursor = x.db()
 
-        q = "SELECT account_password FROM accounts WHERE account_pk = %s"
+        q = "SELECT account_password, account_email FROM accounts WHERE account_pk = %s"
         cursor.execute(q, (account_pk,))
         result = cursor.fetchone()
 
@@ -1404,6 +1404,9 @@ def delete_user(account_pk):
         db.commit()
 
         session.pop("account", None)
+        
+        email = result["account_email"]
+        x.send_delete_email(email)
 
         return """<template mix-redirect="/login"></template>"""
 

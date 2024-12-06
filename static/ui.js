@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(accountPk, {
             method: "DELETE",
             headers: {
-                "X-Delete-Password": password // Send the password in the header
+                "X-User-Confirmation": password // Send the password in the header
             }
         })
         .then(response => response.text())  // Expect HTML text
