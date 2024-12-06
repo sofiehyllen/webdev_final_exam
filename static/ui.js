@@ -16,60 +16,64 @@ function showResults() {
 
 ///////////////////////////////////////////////
 // Open and close modal for deleting profile
+// Handle delete modal visibility
 document.addEventListener("DOMContentLoaded", function () {
-    const openModalBtn = document.getElementById("open-delete-modal-btn");
-    const deleteModal = document.getElementById("delete-modal");
-    const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
-    const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
-    const deletePasswordInput = document.getElementById("delete-password-input"); // Ensure you have an input for the password
+    // Select buttons and modals using classes
+    const openDeleteModalBtns = document.querySelectorAll(".open-delete-modal-btn");
+    const deleteModals = document.querySelectorAll(".delete-modal");
+    const cancelDeleteBtns = document.querySelectorAll(".cancel-delete-btn");
+    const confirmDeleteBtns = document.querySelectorAll(".confirm-delete-btn");
 
-    // Open the modal when the "Delete account" button is clicked
-    openModalBtn.addEventListener("click", function (e) {
-        e.preventDefault(); 
-        deleteModal.classList.remove("hidden");
-        deleteModal.classList.add("flex");
+    // Open the delete modal
+    openDeleteModalBtns.forEach((btn, index) => {
+        btn.addEventListener("click", function () {
+            deleteModals[index]?.classList.remove("hidden");
+            deleteModals[index]?.classList.add("flex");
+        });
     });
 
-    // Close the modal when the "Cancel" button is clicked
-    cancelDeleteBtn.addEventListener("click", function (e) {
-        e.preventDefault();  
-        deleteModal.classList.remove("flex");
-        deleteModal.classList.add("hidden");
+    // Close the delete modal
+    cancelDeleteBtns.forEach((btn, index) => {
+        btn.addEventListener("click", function () {
+            deleteModals[index]?.classList.remove("flex");
+            deleteModals[index]?.classList.add("hidden");
+        });
     });
-
-
 
     // Handle the delete action
-    confirmDeleteBtn.addEventListener("click", function (e) {
-        e.preventDefault();
+    confirmDeleteBtns.forEach((btn, index) => {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
 
-        const password = deletePasswordInput.value.trim();  // Get the entered password
+            const passwordInput = deleteModals[index]?.querySelector(".delete-password-input");
+            const password = passwordInput?.value.trim();
 
-        if (!password) {
-            deletePasswordInput.classList.add("bg-red-200")
-            return;
-        }
-
-        const accountPk = this.getAttribute("mix-delete"); // Get account_pk from the button attribute
-
-        fetch(accountPk, {
-            method: "DELETE",
-            headers: {
-                "X-User-Confirmation": password // Send the password in the header
+            if (!password) {
+                passwordInput?.classList.add("bg-red-200");
+                return;
             }
-        })
-        .then(response => response.text())  // Expect HTML text
-        .then(html => {
-            // Check if the response contains a redirect template
-            if (html.includes('<template mix-redirect="/login"></template>')) {
-                window.location.reload();
-            } else {
-                console.log("An error occurred during account deletion.");
-            }
-        })
-        .catch(error => {
-            console.error("Error deleting account:", error);
-            console.log("There was an error with the request.");
+
+            const accountPk = btn.getAttribute("mix-delete");
+
+            fetch(accountPk, {
+                method: "DELETE",
+                headers: {
+                    "X-User-Confirmation": password
+                }
+            })
+                .then(response => response.text())
+                .then(html => {
+                    console.log(html);
+                    if (html.includes('<template mix-redirect="/login"></template>')) {
+                        console.log("Your account has been deleted.");
+                        window.location.reload();
+                    } else {
+                        console.log("An error occurred during account deletion.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error deleting account:", error);
+                });
         });
     });
 });
