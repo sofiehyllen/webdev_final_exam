@@ -79,12 +79,19 @@ NAME_MIN = 2
 NAME_MAX = 50
 NAME_REGEX = f"^.{{{NAME_MIN},{NAME_MAX}}}$"
 
+DESCRIPTION_MIN = 2
 DESCRIPTION_MAX = 255
-DESCRIPTION_REGEX = f"^.{{{NAME_MIN},{DESCRIPTION_MAX}}}$"
+DESCRIPTION_REGEX = f"^.{{{DESCRIPTION_MIN},{DESCRIPTION_MAX}}}$"
 
 PASSWORD_MIN = 8
 PASSWORD_MAX = 50
 PASSWORD_REGEX = f"^.{{{PASSWORD_MIN},{PASSWORD_MAX}}}$"
+
+ADDRESS_MIN = 2
+ADDRESS_MAX = 255
+ADDRESS_REGEX = f"^.{{{ADDRESS_MIN},{ADDRESS_MAX}}}$"
+
+POSTALCODE_REGEX = "^\d{4}$"
 
 PRICE_MIN = 0
 PRICE_MAX = 9999.99
@@ -141,6 +148,33 @@ def validate_account_password(form_field):
     account_password = request.form.get(form_field, "").strip()
     if not re.match(PASSWORD_REGEX, account_password): raise_custom_exception(error, 400)
     return account_password
+
+
+##############################
+def validate_account_address(form_field):
+    error = f"address {ADDRESS_MIN} to {ADDRESS_MAX} characters"
+    account_address = request.form.get(form_field, "").strip()
+    if not re.match(ADDRESS_REGEX, account_address): raise_custom_exception(error, 400)
+    return account_address
+
+
+
+##############################
+def validate_account_address(form_field):
+    error = f"address {ADDRESS_MIN} to {ADDRESS_MAX} characters"
+    account_address = request.form.get(form_field, "").strip()
+    if not re.match(ADDRESS_REGEX, account_address): raise_custom_exception(error, 400)
+    return account_address
+
+
+
+##############################
+def validate_account_postalcode(form_field):
+    error = f"postalcode incorrect"
+    account_postalcode = request.form.get(form_field, "").strip()
+    if not re.match(POSTALCODE_REGEX, account_postalcode): raise_custom_exception(error, 400)
+    return account_postalcode
+
 
 
 ##############################

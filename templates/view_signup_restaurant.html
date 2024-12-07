@@ -11,6 +11,30 @@
         </div>
 
         <div class="flex flex-col">
+            <label for="restaurant_street" class="text-sm text-gray-600 mb-1">Street</label>
+            <input
+                name="restaurant_street"
+                type="text"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="restaurant_postalcode" class="text-sm text-gray-600 mb-1">Postalcode</label>
+            <input
+                name="restaurant_postalcode"
+                type="text"
+                mix-check="{{ x.POSTALCODE_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="restaurant_city" class="text-sm text-gray-600 mb-1">City</label>
+            <input
+                name="restaurant_city"
+                type="text"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
             <label for="restaurant_email" class="text-sm text-gray-600 mb-1">Email</label>
             <input
                 name="restaurant_email"

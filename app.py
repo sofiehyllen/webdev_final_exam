@@ -126,31 +126,62 @@ def view_customer():
 
 @app.get("/map-locations")
 def get_marker_data():
-    addresses = [
-        "Østerbrogade 70, 2100, København",
-        "Istedgade 80, 1650, København",
-        "Burmeistersgade 9, 1429, København K",
-        "Tagensvej 86, 2200, København N"
-    ]
-    
-    locations = []
-    
-    for address in addresses:
-        location = geolocator.geocode(address)
-        if location:
-            locations.append({
-                "coords": [location.latitude, location.longitude],
-                "popup": f"""<h3>{address}</h3>
-                            <img src="https://picsum.photos/300/200" alt="Restaurant image"/>
-                            <a href="/customer/restaurant/restaurant-pk">More</a>"""
-            })
-        else:
-            locations.append({
-                "coords": [None, None],  # If geocoding fails
-                "popup": f"Marker: {address} (Geocoding failed)"
-            })
+    try:
+        db, cursor = x.db()
+        
+        # SQL query to get addresses from the restaurants table
+        q = "SELECT restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_image_name FROM restaurants"
+        cursor.execute(q)
+        addresses = cursor.fetchall()
 
-    return jsonify(locations)
+        if not addresses:
+            x.raise_custom_exception("no addresses available")
+
+        # Geolocator setup (assuming you have geolocator initialized)
+        locations = []
+
+        # Loop through the fetched addresses
+        for address in addresses:
+            restaurant_pk = address.get("restaurant_pk")
+            restaurant_name = address.get("restaurant_name")
+            street = address.get("restaurant_street")
+            postalcode = address.get("restaurant_postalcode")
+            city = address.get("restaurant_city")
+            restaurant_image_name = address.get("restaurant_image_name")
+
+            full_address = f"{street}, {postalcode}, {city}"
+
+            # Geocode the address
+            location = geolocator.geocode(full_address)
+            if location:
+                popup_html = render_template(
+                    '___map_popup.html',
+                    restaurant_name=restaurant_name,
+                    restaurant_image_name=restaurant_image_name,
+                    restaurant_pk=restaurant_pk
+                )
+
+                locations.append({
+                    "coords": [location.latitude, location.longitude],
+                    "popup": popup_html
+                })
+            else:
+                locations.append({
+                    "coords": [None, None],  # If geocoding fails
+                    "popup": f"Marker: {full_address} (Geocoding failed)"
+                })
+
+        # Return locations in JSON format
+        return jsonify(locations)
+    
+    except Exception as ex:
+        ic(ex)  # Log exception using `icecream` or another logger
+        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 ##############################
@@ -706,6 +737,9 @@ def signup():
 def signup_restaurant():
     try:
         restaurant_name = x.validate_account_name("restaurant_name")
+        restaurant_street = x.validate_account_address("restaurant_street")
+        restaurant_postalcode = x.validate_account_postalcode("restaurant_postalcode")
+        restaurant_city = x.validate_account_address("restaurant_city")
         restaurant_email = x.validate_account_email("restaurant_email")
         restaurant_password = x.validate_account_password("restaurant_password")
         hashed_password = generate_password_hash(restaurant_password)
@@ -739,15 +773,15 @@ def signup_restaurant():
 
         q = '''
             INSERT INTO restaurants 
-            (restaurant_pk, restaurant_name, restaurant_email, restaurant_password, 
-            restaurant_image_name, restaurant_created_at, restaurant_deleted_at, 
-            restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, restaurant_verification_key)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
+            restaurant_email, restaurant_password, restaurant_image_name, restaurant_created_at, 
+            restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
+            restaurant_verification_key) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
         cursor.execute(q, (
-            restaurant_pk, restaurant_name, restaurant_email, hashed_password, 
-            restaurant_image_name, restaurant_created_at, restaurant_deleted_at, 
-            restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
+            restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
+            restaurant_email, hashed_password, restaurant_image_name, restaurant_created_at, 
+            restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
             account_verification_key
         ))
         

@@ -1,38 +1,86 @@
-</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
 <script src="{{url_for('static', filename='app.js')}}"></script>
 <script src="{{url_for('static', filename='mixhtml.js')}}"></script>
 
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
- 
-    // Initialize the map
-    var map = L.map('map').setView([55.6845, 12.564148], 12);
+    var map = L.map('map', {
+        center: [55.6845, 12.564148],  
+        zoom: 12,                   
+        maxBounds: L.latLngBounds([54.5, 8.1], [57.8, 14]), 
+        maxBoundsViscosity: 1.0
+    });
 
     // Add OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 20,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    function test(){
-        var markerLocations = [
-        { coords: [51.5, -0.09], popup: "Marker 1: London" },
-        { coords: [48.8566, 2.3522], popup: "Marker 2: Paris" },
-        { coords: [40.7128, -74.0060], popup: "Marker 3: New York" },
-        { coords: [55.6845, 12.564148], popup: "Marker 4: Tokyo" }
-        ];
 
-        // Loop through the markerLocations array and add markers to the map
-        markerLocations.forEach(function(location) {
-            var marker = L.marker(location.coords).addTo(map);
-            marker.bindPopup(location.popup);
-        });
+    // Create a custom icon for the marker
+    var customIcon = L.icon({
+        iconUrl: 'static/pin.svg', 
+        iconSize: [32, 32], 
+        iconAnchor: [16, 32], 
+        popupAnchor: [0, -32] 
+    });
+
+    // Marker cluster group 
+    var markers = L.markerClusterGroup();
+
+    // Add loading message
+    var loadingMessage = L.control({ position: 'topright' });
+    loadingMessage.onAdd = function () {
+        var div = L.DomUtil.create('div', 'loading');
+        div.innerHTML = 'Loading markers...';
+        return div;
+    };
+    loadingMessage.addTo(map);
+
+    // Function to fetch and load markers asynchronously
+    function loadMarkers() {
+        fetch('/map-locations')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(markerLocations => {
+                // For each location, immediately add a marker
+                markerLocations.forEach(function (location) {
+                    // Only add the marker if the coordinates are valid
+                    if (location.coords[0] !== null && location.coords[1] !== null) {
+                        var marker = L.marker(location.coords, { icon: customIcon })
+                            .bindPopup(location.popup);
+                        
+                        // Add the marker to the cluster group (or directly to the map if no clustering)
+                        markers.addLayer(marker);
+                    } else {
+                        console.log("Geocoding failed for:", location.popup);
+                    }
+                });
+                // Add the markers to the map (this will add them as they are loaded)
+                map.addLayer(markers);
+
+                // Remove the loading message after markers are loaded
+                map.removeControl(loadingMessage);
+            })
+            .catch(error => {
+                console.error('Error fetching marker locations:', error);
+                map.removeControl(loadingMessage);
+            });
     }
 
-    setTimeout(test, 3000)
-    
+    // Load markers when the map is ready
+    loadMarkers();
 </script>
+
+
 
 </body>
 
