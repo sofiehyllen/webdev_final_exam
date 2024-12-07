@@ -1,18 +1,54 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full d-flex">
-    <div id="map" class="w-full h-100vh"></div>
+<main class="w-full flex mt-10 gap-5">
+    <div id="map" class="w-full h-screen rounded-xl"></div>
 
     <div class="w-full h-100vh">
-        <!-- <button><a href="{{ url_for('view_all_items')}}">Items</a></button> -->
-        <!-- <button class="px-20 py-4 rounded-sm"
-            mix-get="/items/page/1"
-        >
-            More
-        </button> -->
-        <h1>Customer</h1>
-        {{ user }}
+
+        <h1 class="text-5xl font-bold">Welcome back {{ user.account_name }}!</h1>
     </div>
 </main>
 
-{% include "_bottom_map.html" %}
+</div>
+<script src="{{url_for('static', filename='app.js')}}"></script>
+<script src="{{url_for('static', filename='mixhtml.js')}}"></script>
+
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+
+    // Initialize the map
+    var map = L.map('map').setView([55.6845, 12.564148], 12);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Dynamic marker locations passed from the backend
+    fetch('/map-locations')
+        .then(response => response.json())  // Parse JSON response
+        .then(markerLocations => {
+            // Loop through the markerLocations array and add markers to the map
+            markerLocations.forEach(function(location) {
+                // Only add marker if coordinates are valid
+                if (location.coords[0] !== null && location.coords[1] !== null) {
+                    var marker = L.marker(location.coords).addTo(map);
+                    marker.bindPopup(location.popup);
+                } else {
+                    console.log("Geocoding failed for:", location.popup);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching marker locations:', error);
+        });
+
+    setTimeout(test, 3000)
+    
+</script>
+
+</body>
+
+</html>

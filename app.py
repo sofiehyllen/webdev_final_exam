@@ -120,6 +120,14 @@ def view_customer():
     #     return redirect(url_for("view_choose_role"))
     return render_template("view_customer.html", user=user)
 
+@app.get("/map-locations")
+def get_marker_data():
+    return [
+        {"coords": [51.5, -0.09], "popup": "Marker 1: London"},
+        {"coords": [48.8566, 2.3522], "popup": "Marker 2: Paris"},
+        {"coords": [40.7128, -74.0060], "popup": "Marker 3: New York"},
+        {"coords": [55.6845, 12.564148], "popup": "Marker 4: Tokyo"}
+    ]
 
 
 ##############################
