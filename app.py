@@ -111,25 +111,12 @@ def view_login():
     return render_template("view_login.html", x=x, title="Login", message=request.args.get("message", ""))
 
 
+
 ##############################
-@app.get("/customer")
-@x.no_cache
-def view_customer():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    # if len(user.get("roles", "")) > 1:
-    #     return redirect(url_for("view_choose_role"))
-
-    address = get_restaurant_addresses()
-
-    return render_template("view_customer.html", user=user, address=address)
-
 def get_restaurant_addresses():
     try:
         db, cursor = x.db()
         
-        # SQL query to get addresses from the restaurants table
         q = "SELECT restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_image_name FROM restaurants"
         cursor.execute(q)
         addresses = cursor.fetchall()
@@ -137,8 +124,6 @@ def get_restaurant_addresses():
         if not addresses:
             x.raise_custom_exception("no addresses available")
 
-        ic(addresses)
-        
         return addresses
     
     except Exception as ex:
@@ -157,42 +142,47 @@ def get_restaurant_addresses():
         if "db" in locals(): db.close()
 
 
+
+##############################
+@app.get("/customer")
+@x.no_cache
+def view_customer():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    # if len(user.get("roles", "")) > 1:
+    #     return redirect(url_for("view_choose_role"))
+    address = get_restaurant_addresses()
+    return render_template("view_customer.html", user=user, address=address)
+
+
+
+##############################
 @app.get("/map-locations")
 def get_map_locations():
     try:
-        db, cursor = x.db()
-        
-        # SQL query to get addresses from the restaurants table
-        q = "SELECT restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_image_name FROM restaurants"
-        cursor.execute(q)
-        addresses = cursor.fetchall()
-
-        if not addresses:
-            x.raise_custom_exception("no addresses available")
+        addresses = get_restaurant_addresses()
 
         locations = []
-
-        # Loop through the fetched addresses
         for address in addresses:
-            restaurant_pk = address.get("restaurant_pk")
-            restaurant_name = address.get("restaurant_name")
-            street = address.get("restaurant_street")
-            postalcode = address.get("restaurant_postalcode")
-            city = address.get("restaurant_city")
-            restaurant_image_name = address.get("restaurant_image_name")
+            restaurant_pk = address["restaurant_pk"]
+            restaurant_name = address["restaurant_name"]
+            street = address["restaurant_street"]
+            postalcode = address["restaurant_postalcode"]
+            city = address["restaurant_city"]
+            restaurant_image_name = address["restaurant_image_name"]
 
             full_address = f"{street}, {postalcode}, {city}"
-
-            # Geocode the address
             location = geolocator.geocode(full_address)
-            if location:
-                popup_html = render_template(
-                    '___map_popup.html',
-                    restaurant_name=restaurant_name,
-                    restaurant_image_name=restaurant_image_name,
-                    restaurant_pk=restaurant_pk
-                )
 
+            popup_html = render_template(
+                '___map_popup.html',
+                restaurant_name=restaurant_name,
+                restaurant_image_name=restaurant_image_name,
+                restaurant_pk=restaurant_pk
+            )
+
+            if location:
                 locations.append({
                     "coords": [location.latitude, location.longitude],
                     "popup": popup_html
@@ -203,17 +193,12 @@ def get_map_locations():
                     "popup": f"Marker: {full_address} (Geocoding failed)"
                 })
 
-        # Return locations in JSON format
         return jsonify(locations)
     
     except Exception as ex:
-        ic(ex)  # Log exception using `icecream` or another logger
-        if "db" in locals(): db.rollback()
+        ic(ex)
         return "<template>System under maintenance</template>", 500
-    
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
+
 
 
 ##############################
