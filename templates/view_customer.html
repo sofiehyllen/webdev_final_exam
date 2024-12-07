@@ -3,9 +3,32 @@
 <main class="w-full flex mt-10 gap-5">
     <div id="map" class="w-full h-screen rounded-xl"></div>
 
-    <div class="w-full h-100vh">
+    <div class="w-full h-fit">
 
         <h1 class="text-5xl font-bold">Welcome back {{ user.account_name }}!</h1>
+        <div class="pt-10 px-4">
+            <h2 class="text-2xl font-semibold mb-6">All restaurants</h2>
+            
+            {% if address %}
+                <div class="h-96 overflow-y-auto">
+                    <ul class="space-y-4">
+                        {% for addr in address %}
+                            <li class="bg-white p-4 gap-3 flex rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                                <img src="{{ url_for('static', filename='restaurant_images/' + addr.restaurant_image_name) }}" alt="{{ addr.restaurant_name }}" class="w-32 h-20 object-cover rounded-md">
+                                <div>
+                                    <h3 class="text-xl font-bold text-blue-600">{{ addr.restaurant_name }}</h3>
+                                    <p class="text-gray-700">{{ addr.restaurant_street }}, {{ addr.restaurant_postalcode }} {{ addr.restaurant_city }}</p>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <p class="text-gray-500">No addresses available.</p>
+            {% endif %}
+        </div>
+        
+        
     </div>
 </main>
 

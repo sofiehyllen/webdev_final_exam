@@ -120,12 +120,12 @@ def view_customer():
     user = session.get("account")
     # if len(user.get("roles", "")) > 1:
     #     return redirect(url_for("view_choose_role"))
-    return render_template("view_customer.html", user=user)
 
+    address = get_restaurant_addresses()
 
+    return render_template("view_customer.html", user=user, address=address)
 
-@app.get("/map-locations")
-def get_marker_data():
+def get_restaurant_addresses():
     try:
         db, cursor = x.db()
         
@@ -137,7 +137,39 @@ def get_marker_data():
         if not addresses:
             x.raise_custom_exception("no addresses available")
 
-        # Geolocator setup (assuming you have geolocator initialized)
+        ic(addresses)
+        
+        return addresses
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals():
+            db.rollback()
+        if isinstance(ex, x.CustomException):
+            return f"""<template>{ex.message}</template>""", ex.code
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>System upgrading</template>", 500
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+@app.get("/map-locations")
+def get_map_locations():
+    try:
+        db, cursor = x.db()
+        
+        # SQL query to get addresses from the restaurants table
+        q = "SELECT restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_image_name FROM restaurants"
+        cursor.execute(q)
+        addresses = cursor.fetchall()
+
+        if not addresses:
+            x.raise_custom_exception("no addresses available")
+
         locations = []
 
         # Loop through the fetched addresses
