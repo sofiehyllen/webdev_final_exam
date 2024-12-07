@@ -659,6 +659,9 @@ def signup():
         selected_role = x.validate_user_role() 
         user_name = x.validate_account_name("user_name")
         user_last_name = x.validate_account_name("user_last_name")
+        user_street = x.validate_account_address("user_street")
+        user_postalcode = x.validate_account_postalcode("user_postalcode")
+        user_city = x.validate_account_address("user_city")
         user_email = x.validate_account_email("user_email")
         user_password = x.validate_account_password("user_password")
         hashed_password = generate_password_hash(user_password)
@@ -694,12 +697,13 @@ def signup():
 
         q = '''
             INSERT INTO users 
-            (user_pk, user_name, user_last_name, user_email, user_password, user_created_at, 
-            user_deleted_at, user_blocked_at, user_updated_at, user_verified_at, user_verification_key)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (user_pk, user_name, user_last_name, user_street, user_postalcode, user_city, user_email, 
+            user_password, user_created_at, user_deleted_at, user_blocked_at, user_updated_at, 
+            user_verified_at, user_verification_key)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
-        cursor.execute(q, (user_pk, user_name, user_last_name, user_email, 
-                            hashed_password, user_created_at, user_deleted_at, user_blocked_at, 
+        cursor.execute(q, (user_pk, user_name, user_last_name, user_street, user_postalcode, user_city, 
+                            user_email, hashed_password, user_created_at, user_deleted_at, user_blocked_at, 
                             user_updated_at, user_verified_at, account_verification_key))
 
         
@@ -819,7 +823,8 @@ def login():
 
         # Query the accounts view to check both users and restaurants
         query = """
-            SELECT account_pk, account_name, account_email,
+            SELECT account_pk, account_name, account_street, 
+            account_postalcode, account_city, account_email,
             account_password, account_verified_at, account_roles,
             user_last_name, account_deleted_at
             FROM accounts
@@ -857,6 +862,9 @@ def login():
         account = {
             "account_pk": rows[0]["account_pk"],
             "account_name": rows[0]["account_name"],
+            "account_street": rows[0]["account_street"],
+            "account_postalcode": rows[0]["account_postalcode"],
+            "account_city": rows[0]["account_city"],
             "account_last_name": rows[0].get("user_last_name"),
             "account_email": rows[0]["account_email"],
             "account_deleted_at": rows[0]["account_deleted_at"],
@@ -1201,13 +1209,17 @@ def restaurant_update():
         try:
             restaurant_pk = session.get("account").get("account_pk")
             restaurant_name = x.validate_account_name("user_name")
+            restaurant_street = x.validate_account_email("user_street")
+            restaurant_postalcode = x.validate_account_email("user_postalcode")
+            restaurant_city = x.validate_account_email("user_city")
             restaurant_email = x.validate_account_email("user_email")
             restaurant_updated_at = int(time.time())
 
             db, cursor = x.db()
 
             cursor.execute(
-                """ SELECT restaurant_name, restaurant_email, restaurant_verified_at, restaurant_verification_key 
+                """ SELECT restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_email, 
+                    restaurant_verified_at, restaurant_verification_key 
                     FROM restaurants 
                     WHERE restaurant_pk = %s""", (restaurant_pk,))
             current_user = cursor.fetchone()
@@ -1227,6 +1239,9 @@ def restaurant_update():
                 
             if (
                 current_user["restaurant_name"] == restaurant_name and
+                current_user["restaurant_street"] == restaurant_street and
+                current_user["restaurant_postalcode"] == restaurant_postalcode and
+                current_user["restaurant_city"] == restaurant_city and
                 current_user["restaurant_email"] == restaurant_email ):
                 
                 toast = render_template("___toast.html", message="No changes made")
@@ -1235,10 +1250,11 @@ def restaurant_update():
             restaurant_verified_at = 0 if current_user["restaurant_email"] != restaurant_email else current_user["restaurant_verified_at"]
 
             cursor.execute(
-                """UPDATE restaurants SET restaurant_name = %s, restaurant_email = %s, 
-                    restaurant_updated_at = %s, restaurant_verified_at = %s 
+                """UPDATE restaurants SET restaurant_name = %s, restaurant_street = %s, restaurant_postalcode = %s, 
+                    restaurant_city = %s, restaurant_email = %s, restaurant_updated_at = %s, restaurant_verified_at = %s 
                 WHERE restaurant_pk = %s""",
-                (restaurant_name, restaurant_email, restaurant_updated_at, restaurant_verified_at, restaurant_pk))
+                (restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_email, 
+                restaurant_updated_at, restaurant_verified_at, restaurant_pk))
             if cursor.rowcount != 1: 
                 x.raise_custom_exception("cannot update user", 401)
 
@@ -1246,6 +1262,9 @@ def restaurant_update():
 
             session["account"].update({
                 "account_name": restaurant_name, 
+                "account_steet": restaurant_street,
+                "account_postalcode": restaurant_postalcode,
+                "account_city": restaurant_city,
                 "account_email": restaurant_email
             })
 

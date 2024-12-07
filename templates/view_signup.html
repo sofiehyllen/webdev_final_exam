@@ -32,6 +32,30 @@
         </div>
 
         <div class="flex flex-col">
+            <label for="user_street" class="text-sm text-gray-600 mb-1">Street</label>
+            <input
+                name="user_street"
+                type="text"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="user_postalcode" class="text-sm text-gray-600 mb-1">Postalcode</label>
+            <input
+                name="user_postalcode"
+                type="text"
+                mix-check="{{ x.POSTALCODE_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="user_city" class="text-sm text-gray-600 mb-1">City</label>
+            <input
+                name="user_city"
+                type="text"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
             <label for="user_email" class="text-sm text-gray-600 mb-1">Email</label>
             <input
                 name="user_email"

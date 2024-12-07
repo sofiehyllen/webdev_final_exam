@@ -9,11 +9,38 @@
             </label>
             <input
                 type="text"
-                id="user_name"
                 name="user_name"
                 value="{{ user.account_name }}"
                 mix-check="{{ x.NAME_REGEX }}" />
         </div>
+
+        <div class="flex flex-col">
+            <label for="user_street" class="text-sm text-gray-600 mb-1">Street</label>
+            <input
+                name="user_street"
+                type="text"
+                value="{{ user.account_street }}"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="user_postalcode" class="text-sm text-gray-600 mb-1">Postalcode</label>
+            <input
+                name="user_postalcode"
+                type="text"
+                value="{{ user.account_postalcode }}"
+                mix-check="{{ x.POSTALCODE_REGEX }}"/>
+        </div>
+
+        <div class="flex flex-col">
+            <label for="user_city" class="text-sm text-gray-600 mb-1">City</label>
+            <input
+                name="user_city"
+                type="text"
+                value="{{ user.account_city }}"
+                mix-check="{{ x.ADDRESS_REGEX }}"/>
+        </div>
+
         <div class="flex flex-col">
             <label for="user_email" class="text-sm text-gray-400 mb-1">
                 Email
