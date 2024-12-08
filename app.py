@@ -232,7 +232,8 @@ def view_all_items():
         cursor.execute(q)
         items = cursor.fetchall()
         for item in items:
-            ic(item)
+            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+
 
         return render_template("view_all_items.html", user=user, items=items, x=x)
     
@@ -304,7 +305,7 @@ def get_item_by_pk(item_pk):
             'item_title': item['item_title'],
             'item_description': item['item_description'],
             'item_price': item['item_price'],
-            'item_image_names': item['item_image_names']
+            'item_image_names': item['item_image_names'].split(',') if item['item_image_names'] else []
         }
     except Exception as ex:
         ic(ex)
@@ -372,7 +373,7 @@ def get_items_from_basket(basket):
                 'item_title': item['item_title'],
                 'item_description': item['item_description'],
                 'item_price': item['item_price'],
-                'item_image_names': item['item_image_names']
+                'item_image_names': item['item_image_names'].split(',') if item['item_image_names'] else []
             }
             for item in items
         ]

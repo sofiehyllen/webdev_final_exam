@@ -7,9 +7,8 @@
       {% for item in items %}
         <article id="item-{{ item.item_pk }}" class="flex p-3 justify-between shadow-md rounded-lg h-30 w-full">
           <div class="w-1/3 h-20 overflow-hidden flex justify-center items-center rounded-lg">
-            {% set images = item.item_image_names.split(',') %}
             <img
-                src="{{ url_for('static', filename='item_images/' + images[0]) }}"
+                src="{{ url_for('static', filename='item_images/' + item['item_image_names'][0]) }}"
                 alt="{{ item.item_title }}"
                 class="h-full w-full object-cover" />
           </div>
@@ -17,7 +16,6 @@
             <div>
               <p class="font-semibold m-0">{{ item.item_title }}</p>
               <p class="text-gray-600 text-sm font-light m-0">{{ item.item_description }}</p>
-              <p class="text-gray-600 text-sm font-light m-0">{{ item.item_pk }}</p>
             </div>
             <p class="text-blue-500 text-sm font-light m-0">DKK {{ item.item_price }}</p>
           </div>
