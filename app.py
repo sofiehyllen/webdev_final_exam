@@ -5,8 +5,9 @@ from werkzeug.security import check_password_hash
 import x
 import uuid 
 import time
-import redis
+
 import os
+import json
 
 from icecream import ic
 ic.configureOutput(prefix=f'***** | ', includeContext=True)
@@ -18,6 +19,8 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'  # or 'redis', etc.
 Session(app)
 
+import redis
+redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)  
 
 # app.secret_key = "your_secret_key"
 
@@ -58,7 +61,7 @@ def view_index():
     return render_template("view_index.html")
 
 
-
+#TODO: check if these should be calling "account"
 ##############################
 @app.get("/signup")
 @x.no_cache
@@ -263,6 +266,140 @@ def view_all_restaurants():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
+def get_item_by_pk(item_pk):
+    try:
+        item_pk = x.validate_uuid4(item_pk)
+        db, cursor = x.db()
+
+        q = '''
+            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
+            ii.item_image_name
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND i.item_pk = %s
+        '''
+        cursor.execute(q, (item_pk,))
+        item = cursor.fetchone()
+
+        if not item:
+            x.raise_custom_exception("Item not found")
+
+        return {
+            'item_pk': item['item_pk'],
+            'item_title': item['item_title'],
+            'item_description': item['item_description'],
+            'item_price': item['item_price'],
+            'item_image_name': item['item_image_name']
+        }
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return f"<template>Database error: {str(ex)} </template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+##############################
+@app.get("/customer/view-basket")
+@x.no_cache
+def view_basket():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    
+    user = session.get("account")
+    if not "customer" in user.get("roles", ""):
+        return redirect(url_for("view_login"))
+    
+    user_pk = user.get("account_pk")
+    basket = redis_client.get(user_pk)
+
+    if basket:
+        # Ensure basket is a list
+        if isinstance(basket, (str, bytes, bytearray)):  # Decode JSON if necessary
+            basket = json.loads(basket)
+        elif not isinstance(basket, list):  # Handle unexpected types
+            basket = []
+
+        items = get_items_from_basket(basket)
+        return render_template('view_basket.html', items=items, user=user)
+    
+    return render_template('view_basket.html', items=[], user=user)
+
+
+
+
+def get_items_from_basket(basket):
+    try:
+        db, cursor = x.db()
+        placeholders = ', '.join(['%s'] * len(basket))
+        query = f'''
+            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
+                    ii.item_image_name
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND i.item_pk IN ({placeholders})
+        '''
+        cursor.execute(query, basket)
+        items = cursor.fetchall()
+
+        return [
+            {
+                'item_pk': item['item_pk'],
+                'item_title': item['item_title'],
+                'item_description': item['item_description'],
+                'item_price': item['item_price'],
+                'item_image_name': item['item_image_name']
+            }
+            for item in items
+        ]
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        return []
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+@app.get("/add-item/<item_pk>")
+def add_to_basket(item_pk):
+    try:
+        user = session.get("account")
+        user_pk = user.get("account_pk")
+
+        basket = redis_client.get(user_pk)
+        
+        if basket:
+            if isinstance(basket, (str, bytes, bytearray)): 
+                basket = json.loads(basket)
+        else:
+            basket = []
+
+        basket.append(item_pk)
+
+        redis_client.set(user_pk, json.dumps(basket)) 
+
+        return redirect(url_for("view_basket")) 
+    
+    except Exception as ex:
+        ic(ex)
+        return f"<template>There was an error adding the item to the basket</template>", 500
+
+
+
+
+
 
 
 
