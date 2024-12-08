@@ -2,6 +2,7 @@ from flask import Flask, session, render_template, redirect, url_for, make_respo
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+import decimal
 import x
 import uuid 
 import time
@@ -204,47 +205,6 @@ def get_map_locations():
 
 
 
-##############################
-@app.get("/customer/items")
-@x.no_cache
-def view_all_items():
-    try:
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
-        user = session.get("account")
-        if len(user.get("roles", "")) > 1:
-            return redirect(url_for("view_choose_role"))
-
-        db, cursor = x.db()
-
-        q = '''
-            SELECT 
-                i.item_pk, 
-                i.item_title, 
-                i.item_description, 
-                i.item_price, 
-                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name) AS item_image_names
-            FROM items i
-            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
-            WHERE i.item_deleted_at = 0
-            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
-        '''
-        cursor.execute(q)
-        items = cursor.fetchall()
-        for item in items:
-            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
-
-
-        return render_template("view_all_items.html", user=user, items=items, x=x)
-    
-    except Exception as ex:
-        ic(ex)
-        if "db" in locals(): db.rollback()
-        return "<template>System under maintenance</template>", 500
-    
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
 
 
 
@@ -277,52 +237,151 @@ def view_all_restaurants():
 
 
 
-def get_item_by_pk(item_pk):
-    try:
-        item_pk = x.validate_uuid4(item_pk)
-        db, cursor = x.db()
 
-        q = '''
+##############################
+@app.get("/order-confirmation")
+@x.no_cache
+def view_order_confirmation():
+    if not session.get("account", ""): 
+        return redirect(url_for("view_login"))
+    user = session.get("account")
+    return render_template("view_order_confirmation.html", user=user)
+
+
+# Utility function to fetch items with images from the database
+def fetch_items(query, params=None):
+    try:
+        db, cursor = x.db()
+        cursor.execute(query, params)
+        items = cursor.fetchall()
+
+        # Process each item to split image names into a list
+        for item in items:
+            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+
+        return items
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals():
+            db.rollback()
+        return []
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if "db" in locals():
+            db.close()
+
+
+@app.get("/customer/items")
+@x.no_cache
+def view_all_items():
+    try:
+        if not session.get("account", ""): 
+            return redirect(url_for("view_login"))
+        user = session.get("account")
+
+        query = '''
             SELECT 
                 i.item_pk, 
                 i.item_title, 
                 i.item_description, 
                 i.item_price, 
-                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name) AS item_image_names
+                GROUP_CONCAT(ii.item_image_name) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0
             GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
         '''
-        cursor.execute(q, (item_pk,))
-        item = cursor.fetchone()
+        
+        items = fetch_items(query)
 
-        if not item:
-            x.raise_custom_exception("Item not found")
-
-        return {
-            'item_pk': item['item_pk'],
-            'item_title': item['item_title'],
-            'item_description': item['item_description'],
-            'item_price': item['item_price'],
-            'item_image_names': item['item_image_names'].split(',') if item['item_image_names'] else []
-        }
+        return render_template("view_all_items.html", user=user, items=items, x=x)
+    
     except Exception as ex:
         ic(ex)
-        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+
+
+def get_item_by_pk(item_pk):
+    try:
+        item_pk = x.validate_uuid4(item_pk)
+
+        query = '''
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name) AS item_image_names
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND i.item_pk = %s
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
+        '''
+        
+        items = fetch_items(query, (item_pk,))
+        if not items:
+            x.raise_custom_exception("Item not found")
+
+        return items[0]  # Only one item expected
+    
+    except Exception as ex:
+        ic(ex)
         if isinstance(ex, x.CustomException): 
             return f"""<template mix-target="#toast" mix-bottom>{ex.message}</template>""", ex.code        
-        if isinstance(ex, x.mysql.connector.Error):
-            ic(ex)
-            return f"<template>Database error: {str(ex)} </template>", 500        
-        return "<template>System under maintenance</template>", 500  
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
+        return "<template>System under maintenance</template>", 500
 
 
 
-##############################
+
+def get_items_from_basket(basket):
+    try:
+        # Extract only item_pk values from the basket
+        item_pks = [item['item_pk'] for item in basket if 'item_pk' in item]
+
+        # Check if there are any items to query
+        if not item_pks:
+            return []
+
+        # Create placeholders for SQL query
+        placeholders = ', '.join(['%s'] * len(item_pks))
+
+        # Construct the query to fetch item details
+        query = f'''
+            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
+                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND i.item_pk IN ({placeholders})
+            GROUP BY i.item_pk
+        '''
+
+        # Execute the query with item_pks
+        db, cursor = x.db()
+        cursor.execute(query, tuple(item_pks))
+        items = cursor.fetchall()
+
+        # Build the result including quantities from the basket
+        result = []
+        for item in items:
+            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+            quantity = next((b['quantity'] for b in basket if b['item_pk'] == item['item_pk']), 0)
+            item['quantity'] = quantity
+            result.append(item)
+
+        return result
+    
+    except Exception as ex:
+        ic(ex)
+        return []  # Return an empty list if there's an error
+
+
+
+
+
+
+
 @app.get("/customer/view-basket")
 @x.no_cache
 def view_basket():
@@ -337,53 +396,26 @@ def view_basket():
     basket = redis_client.get(user_pk)
 
     if basket:
-        # Ensure basket is a list
+        # Ensure basket is a dictionary
         if isinstance(basket, (str, bytes, bytearray)):  # Decode JSON if necessary
             basket = json.loads(basket)
         elif not isinstance(basket, list):  # Handle unexpected types
             basket = []
 
         items = get_items_from_basket(basket)
-        return render_template('view_basket.html', items=items, user=user)
+
+        # Calculate total price
+        total_price = sum(item['item_price'] * item['quantity'] for item in items)
+        total_price = round(total_price, 2)  # Round to 2 decimal places
+
+        return render_template('view_basket.html', items=items, user=user, total_price=total_price)
     
-    return render_template('view_basket.html', items=[], user=user)
+    # Handle the case where the basket is empty
+    total_price = 00.00  # Default to 0 if the basket is empty
+    return render_template('view_basket.html', items=[], user=user, total_price=total_price)
 
 
 
-
-def get_items_from_basket(basket):
-    try:
-        db, cursor = x.db()
-        placeholders = ', '.join(['%s'] * len(basket))
-
-        query = f'''
-            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
-            FROM items i
-            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
-            WHERE i.item_deleted_at = 0 AND i.item_pk IN ({placeholders})
-            GROUP BY i.item_pk
-        '''
-        cursor.execute(query, tuple(basket))
-        items = cursor.fetchall()
-
-        return [
-            {
-                'item_pk': item['item_pk'],
-                'item_title': item['item_title'],
-                'item_description': item['item_description'],
-                'item_price': item['item_price'],
-                'item_image_names': item['item_image_names'].split(',') if item['item_image_names'] else []
-            }
-            for item in items
-        ]
-    except Exception as ex:
-        ic(ex)
-        if "db" in locals(): db.rollback()
-        return []
-    finally:
-        if "cursor" in locals(): cursor.close()
-        if "db" in locals(): db.close()
 
 
 
@@ -391,25 +423,59 @@ def get_items_from_basket(basket):
 def add_to_basket(item_pk):
     try:
         user = session.get("account")
+        if not user:
+            return redirect(url_for("view_login"))
+
         user_pk = user.get("account_pk")
 
+        # Retrieve the basket from Redis
         basket = redis_client.get(user_pk)
-        
+
+        # If basket exists, decode it, else initialize an empty list
         if basket:
-            if isinstance(basket, (str, bytes, bytearray)): 
+            if isinstance(basket, (str, bytes, bytearray)):  # Decode JSON if it's a string or bytes
                 basket = json.loads(basket)
         else:
             basket = []
 
-        basket.append(item_pk)
+        # Check if the basket is a list of items (with 'item_pk' and 'quantity')
+        if not isinstance(basket, list):
+            basket = []
 
-        redis_client.set(user_pk, json.dumps(basket)) 
+        # Retrieve the item details (including item price) using get_item_by_pk
+        item_details = get_item_by_pk(item_pk)  # Use your existing function to get item details
+        if isinstance(item_details, tuple):  # If an error occurred (based on your get_item_by_pk exception handling)
+            return item_details[0]  # Return the error message
+        
+        item_price = item_details.get("item_price")  # Retrieve item price from the details
 
-        return redirect(url_for("view_basket")) 
+        # Convert Decimal to float to make it JSON serializable
+        if isinstance(item_price, decimal.Decimal):
+            item_price = float(item_price)
+
+        # Look for the item in the basket
+        item_found = False
+        for item in basket:
+            if item['item_pk'] == item_pk:
+                item['quantity'] += 1  # Increment the quantity
+                item_found = True
+                break
+        
+        if not item_found:
+            # If the item is not in the basket, add it with a quantity of 1 and the price
+            basket.append({'item_pk': item_pk, 'quantity': 1, 'item_price': item_price})
+
+        # Save the updated basket back to Redis
+        redis_client.set(user_pk, json.dumps(basket))
+
+        return redirect(url_for("view_basket"))
     
     except Exception as ex:
         ic(ex)
         return f"<template>There was an error adding the item to the basket</template>", 500
+
+
+
 
 
 
@@ -422,36 +488,96 @@ def remove_from_basket(item_pk):
 
     user_pk = user.get("account_pk")
 
+    # Retrieve the basket from Redis
     basket = redis_client.get(user_pk)
-
-    app.logger.debug(f"User PK: {user_pk}")
-    app.logger.debug(f"Original Basket (raw): {basket}")
-    app.logger.debug(f"Basket type: {type(basket)}")
 
     if isinstance(basket, str):
         basket = json.loads(basket)
 
-    app.logger.debug(f"Decoded Basket: {basket}")
-
-    # Remove item
     try:
-        basket.remove(item_pk)
-        redis_client.set(user_pk, json.dumps(basket))
-        app.logger.debug(f"Item removed: {item_pk}")
-    except ValueError:
-        app.logger.debug(f"Item not found in basket: {item_pk}")
+        # If the basket is a list, remove the item with the matching item_pk
+        if isinstance(basket, list):
+            basket = [item for item in basket if item.get('item_pk') != item_pk]
 
-    # Save updated basket
+        # Save the updated basket back to Redis
+        redis_client.set(user_pk, json.dumps(basket))
+
+        app.logger.debug(f"Item removed: {item_pk}")
+
+    except Exception as ex:
+        app.logger.error(f"Error removing item: {ex}")
+        return "<template>There was an error removing the item from the basket</template>", 500
+
+    # Update the session with the modified basket
     session['basket'] = json.dumps(basket)
     session.modified = True
     app.logger.debug(f"Updated Basket: {session['basket']}")
-
-    ic("Item removed successfully")
 
     return redirect(url_for("view_basket"))
 
 
 
+
+
+
+@app.get('/increase-quantity/<item_pk>')
+@x.no_cache
+def increase_quantity(item_pk):
+    user = session.get("account")
+    if not user:
+        return redirect(url_for("view_login"))
+
+    user_pk = user.get("account_pk")
+    basket = redis_client.get(user_pk)
+
+    if isinstance(basket, str):
+        basket = json.loads(basket)
+
+    # Check if the item exists in the basket, and increase its quantity
+    for item in basket:
+        if item['item_pk'] == item_pk:
+            item['quantity'] += 1  # Increase quantity by 1
+            break
+    else:
+        # If the item doesn't exist, add it with quantity 1
+        basket.append({'item_pk': item_pk, 'quantity': 1})
+
+    # Save updated basket
+    redis_client.set(user_pk, json.dumps(basket))
+    session['basket'] = json.dumps(basket)
+    session.modified = True
+
+    return redirect(url_for("view_basket"))
+
+
+@app.get('/decrease-quantity/<item_pk>')
+@x.no_cache
+def decrease_quantity(item_pk):
+    user = session.get("account")
+    if not user:
+        return redirect(url_for("view_login"))
+
+    user_pk = user.get("account_pk")
+    basket = redis_client.get(user_pk)
+
+    if isinstance(basket, str):
+        basket = json.loads(basket)
+
+    # Find the item in the basket and decrease its quantity
+    for item in basket:
+        if item['item_pk'] == item_pk:
+            if item['quantity'] > 1:
+                item['quantity'] -= 1  # Decrease quantity by 1
+            else:
+                basket.remove(item)  # Remove item if quantity reaches 0
+            break
+
+    # Save updated basket
+    redis_client.set(user_pk, json.dumps(basket))
+    session['basket'] = json.dumps(basket)
+    session.modified = True
+
+    return redirect(url_for("view_basket"))
 
 
 
@@ -1315,6 +1441,53 @@ def create_item():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()    
+
+
+
+
+@app.post('/send-order-email')
+def send_order_email():
+    try:
+        user = session.get("account")
+        user_email = user.get("account_email")
+        to_email = user_email  
+
+        # Get the user's basket from Redis
+        user_pk = user.get("account_pk")
+        basket = redis_client.get(user_pk)  # Retrieve the basket from Redis or session
+        
+        # If the basket is not found, return an error
+        if not basket:
+            return jsonify({"error": "Basket is empty or not found."}), 400
+
+        # Decode the basket if it's in string/byte format
+        if isinstance(basket, (bytes, bytearray, str)):
+            basket = json.loads(basket)
+
+        # Now you have the basket, pass it to get_items_from_basket
+        order = get_items_from_basket(basket)  # Pass the basket data here
+        # If the order is empty, return an error
+        if not order:
+            return jsonify({"error": "No items found in the basket."}), 400
+        
+        # Calculate total price
+        total_price = sum(item['item_price'] * item['quantity'] for item in order)
+
+        # Send the order confirmation email
+        order = x.format_order_details(order)
+        x.send_order_confirmation_email(to_email, order, total_price)
+
+        # Empty the basket after the email is sent (from Redis and session)
+        redis_client.delete(user_pk)  # Remove the basket from Redis
+        session.pop('basket', None)  # Clear the basket from the session if stored there
+
+        return """<template mix-redirect="/order-confirmation"></template>""", 201
+    
+    except Exception as ex:
+        # Handle error if any
+        ic(f"Error: {ex}")
+        return jsonify({"error": "An error occurred while sending the email."}), 500
+
 
 
 ##############################
