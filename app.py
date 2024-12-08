@@ -218,14 +218,21 @@ def view_all_items():
         db, cursor = x.db()
 
         q = '''
-            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-            ii.item_image_name
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
         '''
         cursor.execute(q)
         items = cursor.fetchall()
+        for item in items:
+            ic(item)
 
         return render_template("view_all_items.html", user=user, items=items, x=x)
     
@@ -275,11 +282,16 @@ def get_item_by_pk(item_pk):
         db, cursor = x.db()
 
         q = '''
-            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-            ii.item_image_name
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
-            WHERE i.item_deleted_at = 0 AND i.item_pk = %s
+            WHERE i.item_deleted_at = 0
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
         '''
         cursor.execute(q, (item_pk,))
         item = cursor.fetchone()
@@ -292,7 +304,7 @@ def get_item_by_pk(item_pk):
             'item_title': item['item_title'],
             'item_description': item['item_description'],
             'item_price': item['item_price'],
-            'item_image_name': item['item_image_name']
+            'item_image_names': item['item_image_names']
         }
     except Exception as ex:
         ic(ex)
@@ -342,14 +354,16 @@ def get_items_from_basket(basket):
     try:
         db, cursor = x.db()
         placeholders = ', '.join(['%s'] * len(basket))
+
         query = f'''
             SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-                    ii.item_image_name
+                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0 AND i.item_pk IN ({placeholders})
+            GROUP BY i.item_pk
         '''
-        cursor.execute(query, basket)
+        cursor.execute(query, tuple(basket))
         items = cursor.fetchall()
 
         return [
@@ -358,7 +372,7 @@ def get_items_from_basket(basket):
                 'item_title': item['item_title'],
                 'item_description': item['item_description'],
                 'item_price': item['item_price'],
-                'item_image_name': item['item_image_name']
+                'item_image_names': item['item_image_names']
             }
             for item in items
         ]
@@ -396,6 +410,44 @@ def add_to_basket(item_pk):
         ic(ex)
         return f"<template>There was an error adding the item to the basket</template>", 500
 
+
+
+@app.get('/remove-item/<item_pk>')
+@x.no_cache
+def remove_from_basket(item_pk):
+    user = session.get("account")
+    if not user:
+        return redirect(url_for("view_login"))
+
+    user_pk = user.get("account_pk")
+
+    basket = redis_client.get(user_pk)
+
+    app.logger.debug(f"User PK: {user_pk}")
+    app.logger.debug(f"Original Basket (raw): {basket}")
+    app.logger.debug(f"Basket type: {type(basket)}")
+
+    if isinstance(basket, str):
+        basket = json.loads(basket)
+
+    app.logger.debug(f"Decoded Basket: {basket}")
+
+    # Remove item
+    try:
+        basket.remove(item_pk)
+        redis_client.set(user_pk, json.dumps(basket))
+        app.logger.debug(f"Item removed: {item_pk}")
+    except ValueError:
+        app.logger.debug(f"Item not found in basket: {item_pk}")
+
+    # Save updated basket
+    session['basket'] = json.dumps(basket)
+    session.modified = True
+    app.logger.debug(f"Updated Basket: {session['basket']}")
+
+    ic("Item removed successfully")
+
+    return redirect(url_for("view_basket"))
 
 
 
