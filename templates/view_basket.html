@@ -1,0 +1,63 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full">
+  <h1 class="text-2xl font-bold mb-4">Your Basket</h1>
+  <div>
+    {% if items %}
+    <ul class="border-b">
+        {% for item in items %}
+            <li class="w-full flex p-3 border-b">
+              <div class="w-1/6 h-20 overflow-hidden flex justify-center items-center rounded-lg">   
+                <img
+                    src="{{ url_for('static', filename='item_images/' + item['item_image_names'][0]) }}"
+                    alt="{{ item.item_title }}"
+                    class="h-full w-full object-cover" />
+              </div>
+              <div class="flex flex-col justify-between ml-4 flex-1">
+                <div>
+                    <p class="font-semibold m-0">{{ item.item_title }}</p>
+                    <p class="text-gray-600 text-sm font-light m-0">{{ item.item_description }}</p>
+                </div>
+                <p class="text-blue-500 text-sm font-semibold m-0">DKK {{ item.item_price }}</p>
+              </div>
+                
+              <div class="flex items-center justify-center gap-5">
+                <div class="flex items-center space-x-2">
+                  <a href="/decrease-quantity/{{ item.item_pk }}"
+                      class="bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
+                      -
+                  </a>
+                  <span class="text-lg">{{ item.quantity }}</span>
+                  <a href="/increase-quantity/{{ item.item_pk }}"
+                      class="bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
+                      +
+                  </a>
+                </div>
+                  <a
+                    href="/remove-item/{{ item.item_pk }}"
+                    class="text-red-500 text-sm font-semibold hover:underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                      <path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd" />
+                    </svg>
+                    
+                  </a>
+              </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="w-full flex flex-col items-end">
+      <p class="text-blue-500 text-xl font-semibold p-3 text-right">DKK {{ '%.2f' % total_price }}</p>
+      <form id="order-checkout">
+        <input type="hidden" name="order_details" value="{{ items }}">
+        <input type="hidden" name="total_price" value="{{ total_price }}">
+        <button mix-data="#order-checkout" mix-post="/send-order-email" class="bg-blue-500 text-white px-5 py-3 rounded-md w-fit" type="submit" class="btn btn-primary">Checkout</button>
+      </form>
+    
+    </div>
+    {% else %}
+      <p class="text-center text-gray-500 mt-6">Your basket is currently empty. Add some items to get started!</p>
+    {% endif %}
+  </div>
+</main>
+
+{% include "_bottom.html" %}

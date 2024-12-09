@@ -333,3 +333,32 @@ def send_item_delete_email(to_email):
     <p>Sincerely,<br>My company name</p>
     """
     return send_email(to_email, "Your menu item has been deleted", body)
+
+
+
+##############################
+def send_order_confirmation_email(to_email, order_details, total_price):
+    body = f"""
+    <p>Hello,</p>
+    <p>Thank you for your order! Below are the details of your purchase:</p>
+    {order_details}
+    <p><strong>Total Price: DKK {total_price}</strong></p>
+    <p>We will process your order shortly. Thank you for shopping with us!</p>
+    <p>Sincerely,<br>My company name</p>
+    """
+    return send_email(to_email, "Order Confirmation", body)
+
+def format_order_details(items):
+    order_details = "<h3>Your Order Details:</h3><ul>"
+    
+    for item in items:
+        order_details += f"""
+            <li>
+                <p><strong>{item['item_title']}</strong></p>
+                <p>Quantity: {item['quantity']}</p>
+                <p>Price: DKK {item['item_price']}</p>
+            </li>
+        """
+    
+    order_details += "</ul>"
+    return order_details
