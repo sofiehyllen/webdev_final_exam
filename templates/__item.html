@@ -1,0 +1,23 @@
+<a href="/add-item/{{ item.item_pk }}" class="shadow-md rounded-lg h-30 min-w-80 w-1/3 hover:shadow-lg transition-shadow relative group">
+  <article class="flex p-3 justify-between">
+      <div class="w-2/3 flex flex-col justify-between">
+          <div>
+              <p class="font-semibold m-0">{{ item.item_title }}</p>
+              <p class="text-gray-600 text-sm font-light m-0">{{ item.item_description }}</p>
+          </div>
+          <p class="text-blue-500 text-sm font-light m-0">DKK {{ item.item_price }}</p>
+      </div>
+      <div class="w-1/3 h-20 overflow-hidden flex justify-center items-center rounded-lg">
+          <img
+              src="{{ url_for('static', filename='item_images/' + item['item_image_names'][0]) }}"
+              alt="{{ item.item_title }}"
+              class="h-full w-full object-cover" />
+      </div>
+  </article>
+
+  <div class="absolute inset-0 bg-blue-500 bg-opacity-20 opacity-0 rounded-lg group-hover:opacity-100 flex justify-center items-center transition-opacity">
+      <div class="size-12 bg-white rounded-full flex justify-center items-center hover:scale-125 transition-transform">
+          <span class="text-blue-500 font-bold text-4xl pb-1">&plus;</span>
+      </div>
+  </div>
+</a>

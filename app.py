@@ -309,11 +309,14 @@ def view_all_items():
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0
             GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
+            LIMIT 0,6
         '''
         
         items = fetch_items(query)
 
-        return render_template("view_all_items.html", user=user, items=items, x=x)
+        next_page = 1
+
+        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page)
     
     except Exception as ex:
         ic(ex)
@@ -1018,6 +1021,84 @@ def view_search_items():
         search_text=search_text,
         user=user
     )
+
+
+
+
+
+
+
+
+@app.get("/page/<page_number>")
+def get_more_items(page_number=1):
+    try:
+        page_number = x.validate_page_number(page_number) if page_number else 1
+
+        db, cursor = x.db()
+
+        items_per_page = 6
+        total_items_with_hanging = items_per_page + 1
+        offset = (page_number - 1) * items_per_page
+
+        query = '''
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name) AS item_image_names
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
+            LIMIT %s OFFSET %s
+        '''
+
+        cursor.execute(query, (total_items_with_hanging, offset))
+        items = cursor.fetchall()
+
+        for item in items:
+            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+
+
+        html = "" # Server side rendering
+
+        for item in items[:6]:
+            html_item = render_template("__item.html", item=item)
+            html = html + html_item
+
+        db.commit()
+
+        next_page = int(page_number) + 1 
+        new_button = render_template("___btn_more.html", next_page=next_page)
+        ic(next_page)
+        print(next_page)
+        if len(items) <= items_per_page:
+            new_button = "<div>No more</div>"
+
+        return f"""
+            <template mix-target="#items" mix-bottom>
+                {html}
+            </template>
+            <template mix-target="#btn_next_page" mix-replace>
+                {new_button}
+            </template>
+        """
+    
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return ic(ex.message), ex.code        
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
 
 ##############################
 ##############################
@@ -1838,6 +1919,9 @@ def block_target(target_type, pk):
     try:
         # Validate UUID
         pk = x.validate_uuid4(pk)
+        uuid4 = request.values.get("uuid4", "").strip()
+        ic(uuid4)
+        print(uuid4)
         blocked_at = int(time.time())
 
         db, cursor = x.db()
@@ -1961,7 +2045,7 @@ def unblock_target(target_type, pk):
         db.commit()
 
         block_html = render_template("___btn_block.html", pk=pk, target_type=target_type)
-        toast = render_template("___toast.html", message=f"{target_type.capitalize()} blocked")
+        toast = render_template("___toast.html", message=f"{target_type.capitalize()} unblocked")
 
         return f"""
                 <template mix-target="#unblock-{target_type}-{pk}" mix-replace>

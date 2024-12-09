@@ -93,6 +93,8 @@ ADDRESS_REGEX = f"^.{{{ADDRESS_MIN},{ADDRESS_MAX}}}$"
 
 POSTALCODE_REGEX = "^\d{4}$"
 
+REGEX_PAGE_NUMBER = f"^([1-9][0-9]*)$"
+
 PRICE_MIN = 0
 PRICE_MAX = 9999.99
 PRICE_REGEX = "^\d{1,4}(\.\d{1,2})?$"
@@ -201,6 +203,13 @@ def validate_search_field():
     if not re.match(NAME_REGEX, search_text): raise_custom_exception(error, 400)
     return search_text
 
+
+
+##############################
+def validate_page_number(page_number):
+    error = f"page_number invalid"
+    if not re.match(REGEX_PAGE_NUMBER, page_number): raise_custom_exception(error, 400)
+    return int(page_number)
 
 
 ##############################
