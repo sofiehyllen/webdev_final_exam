@@ -238,10 +238,17 @@ def view_all_restaurants():
 
         db, cursor = x.db()
 
-        cursor.execute("SELECT restaurant_name, restaurant_pk, restaurant_image_name FROM restaurants WHERE restaurant_deleted_at = 0")
+        cursor.execute("""
+                        SELECT restaurant_name, restaurant_pk, restaurant_image_name 
+                        FROM restaurants 
+                        WHERE restaurant_deleted_at = 0
+                        LIMIT 0,6""")
+        
         restaurants = cursor.fetchall()
 
-        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants)
+        next_page = 2
+
+        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants, next_page=next_page, table_name="restaurants")
     
     except Exception as ex:
         ic(ex)
@@ -314,9 +321,9 @@ def view_all_items():
         
         items = fetch_items(query)
 
-        next_page = 1
+        next_page = 2
 
-        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page)
+        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page, table_name="items")
     
     except Exception as ex:
         ic(ex)
@@ -1029,55 +1036,80 @@ def view_search_items():
 
 
 
-@app.get("/page/<page_number>")
-def get_more_items(page_number=1):
+@app.get("/page/<table_name>/<page_number>")
+def get_more_items(table_name, page_number):
     try:
-        page_number = x.validate_page_number(page_number) if page_number else 1
-
+        # Validate and set defaults
+        page_number = x.validate_page_number(page_number)
         db, cursor = x.db()
 
+        # Define per-page limit and offset
         items_per_page = 6
         total_items_with_hanging = items_per_page + 1
         offset = (page_number - 1) * items_per_page
 
-        query = '''
-            SELECT 
-                i.item_pk, 
-                i.item_title, 
-                i.item_description, 
-                i.item_price, 
-                GROUP_CONCAT(ii.item_image_name) AS item_image_names
-            FROM items i
-            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
-            WHERE i.item_deleted_at = 0
-            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
-            LIMIT %s OFFSET %s
-        '''
+        # Table-specific query templates
+        queries = {
+            "items": '''
+                SELECT 
+                    i.item_pk, 
+                    i.item_title, 
+                    i.item_description, 
+                    i.item_price, 
+                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
+                FROM items i
+                LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+                WHERE i.item_deleted_at = 0
+                GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
+                LIMIT %s OFFSET %s
+            ''',
+            "restaurants": '''
+                SELECT 
+                    restaurant_pk, 
+                    restaurant_name, 
+                    restaurant_image_name 
+                FROM restaurants r
+                WHERE restaurant_deleted_at = 0
+                GROUP BY r.restaurant_pk, r.restaurant_name
+                LIMIT %s OFFSET %s
+            '''
+        }
 
+        # Check if the table_name exists in queries
+        if table_name not in queries:
+            return "<template>Invalid table name</template>", 400
+
+        # Execute the corresponding query
+        query = queries[table_name]
         cursor.execute(query, (total_items_with_hanging, offset))
-        items = cursor.fetchall()
+        results = cursor.fetchall()
 
-        for item in items:
-            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+        # Process the items based on the table
+        if table_name == "items":
+            for result in results:
+                result['item_image_names'] = result['item_image_names'].split(',') if result['item_image_names'] else []
 
+        # Server-side rendering of items
+        html = ""
 
-        html = "" # Server side rendering
-
-        for item in items[:6]:
-            html_item = render_template("__item.html", item=item)
-            html = html + html_item
+        for result in results[:items_per_page]:
+            if table_name == "items":
+                html_item = render_template("__item.html", item=result)
+            elif table_name == "restaurants":
+                html_item = render_template("__restaurant.html", restaurant=result)
+            html += html_item
 
         db.commit()
 
-        next_page = int(page_number) + 1 
-        new_button = render_template("___btn_more.html", next_page=next_page)
-        ic(next_page)
-        print(next_page)
-        if len(items) <= items_per_page:
-            new_button = "<div>No more</div>"
+        # Prepare the "More" button
+        next_page = int(page_number) + 1
+        new_button = render_template("___btn_more.html", next_page=next_page, table_name=table_name)
+        if len(results) <= items_per_page:
+            new_button = "<p>No more items</p>"
+
 
         return f"""
-            <template mix-target="#items" mix-bottom>
+            <template mix-target="#{table_name}" mix-bottom>
                 {html}
             </template>
             <template mix-target="#btn_next_page" mix-replace>
