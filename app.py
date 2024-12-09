@@ -6,9 +6,10 @@ import decimal
 import x
 import uuid 
 import time
-
+import redis
 import os
 import json
+
 
 from icecream import ic
 ic.configureOutput(prefix=f'***** | ', includeContext=True)
@@ -20,8 +21,24 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'  # or 'redis', etc.
 Session(app)
 
-import redis
-redis_client = redis.Redis(host="redis", port=6379, decode_responses=True)  
+
+redis_host = os.getenv("REDIS_HOST")
+redis_port = os.getenv("REDIS_PORT") 
+redis_password = os.getenv("REDIS_PASSWORD")
+if not redis_host:
+    raise ValueError("REDIS_HOST is not set in environment variables.")
+
+try:
+    redis_client = redis.StrictRedis(
+        host=redis_host,
+        port=redis_port,
+        password=redis_password,
+        decode_responses=True
+    ) 
+    redis_client.ping()  # Test the connection
+    print("Connection to RedisLabs successful!")
+except redis.ConnectionError as e:
+    print(f"Error connecting to Redis: {e}")
 
 # app.secret_key = "your_secret_key"
 
@@ -911,17 +928,17 @@ def view_edit_restaurant_profile():
     return render_template("view_edit_restaurant_profile.html", user=user, x=x)
 
 
-
 ##############################
-@app.get("/search")
-@x.no_cache
-def search_items():
+def get_search_items():
     try:
-
+        user = session.get("account", "")
         search_text = request.args.get("search_field", "").strip()
+
         ic(search_text)
-        if not search_text:
-            return render_template("___search_results.html", items=[], message="Please enter a search term.")
+        if not search_text or search_text == "":
+            items = ""
+            restaurants = ""
+            return render_template("view_search_results.html", items=items, restaurants=restaurants, user=user)
 
         db, cursor = x.db()
 
@@ -946,12 +963,8 @@ def search_items():
         """
         cursor.execute(restaurant_search_query, (search_param,))
         restaurants = cursor.fetchall()
-        
-        results = items + restaurants
 
-        user = session.get("account", "")
-
-        return render_template("___search_results.html", items=items, restaurants=restaurants, results=results, search_text=search_text, user=user)
+        return items, restaurants, search_text
 
     except Exception as ex:
         ic(ex)
@@ -966,7 +979,30 @@ def search_items():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+@app.get("/search")
+@x.no_cache
+def view_search_items():
+    user = session.get("account", "")
 
+    if not user:
+        return redirect(url_for("view_login"))
+    if not 'customer' in user.get("roles"):
+        return redirect(url_for("view_login"))
+    
+    results = get_search_items()
+
+    if isinstance(results, str):  # The result is an HTML response
+        return results
+
+    # Unpack results
+    items, restaurants, search_text = results
+    return render_template(
+        "view_search_results.html",
+        items=items,
+        restaurants=restaurants,
+        search_text=search_text,
+        user=user,
+    )
 
 ##############################
 ##############################

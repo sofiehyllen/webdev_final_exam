@@ -1,7 +1,7 @@
 {% include "_top_logged.html" %}
 
-{% if results %}
-    <p class="text-left py-5 text-4xl font-extrabold">Search results: <span class="capitalize">{{ search_text }}</span></p>
+
+    <p class="text-left py-5 text-4xl font-extrabold">Search results for: <span class="capitalize">"{{ search_text }}"</span></p>
     {% if restaurants %}
     <p class="text-left py-5 text-2xl font-extrabold">Restaurants</p>
         <div class="flex flex-wrap justify-start items-center gap-5 mb-5">
@@ -51,6 +51,6 @@
     {% if not items and not restaurants %}
         <p>No results found for "{{ search_text }}"</p>
     {% endif %}
-{% endif %}
+
 
 {% include "_bottom.html" %}
