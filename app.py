@@ -979,6 +979,9 @@ def get_search_items():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+
+
+##############################
 @app.get("/search")
 @x.no_cache
 def view_search_items():
@@ -1001,7 +1004,7 @@ def view_search_items():
         items=items,
         restaurants=restaurants,
         search_text=search_text,
-        user=user,
+        user=user
     )
 
 ##############################
@@ -1542,14 +1545,17 @@ def user_update():
         user_pk = session.get("account").get("account_pk")
         user_name = x.validate_account_name("user_name")
         user_last_name = x.validate_account_name("user_last_name")
+        user_street = x.validate_account_address("user_street")
+        user_postalcode = x.validate_account_postalcode("user_postalcode")
+        user_city = x.validate_account_address("user_city")
         user_email = x.validate_account_email("user_email")
         user_updated_at = int(time.time())
-
         db, cursor = x.db()
+        ic(user_email)
         
         # Fetch the current user info
         cursor.execute(
-            """ SELECT user_name, user_last_name, user_email, user_verified_at, user_verification_key 
+            """ SELECT user_name, user_last_name, user_street, user_postalcode, user_city, user_email, user_verified_at, user_verification_key 
                 FROM users 
                 WHERE user_pk = %s""", (user_pk,))
         current_user = cursor.fetchone()
@@ -1570,6 +1576,9 @@ def user_update():
         if (
             current_user["user_name"] == user_name and
             current_user["user_last_name"] == user_last_name and
+            current_user["user_street"] == user_street and
+            current_user["user_postalcode"] == user_postalcode and
+            current_user["user_city"] == user_city and
             current_user["user_email"] == user_email ):
             
             toast = render_template("___toast.html", message="No changes made")
@@ -1578,10 +1587,12 @@ def user_update():
         user_verified_at = 0 if current_user["user_email"] != user_email else current_user["user_verified_at"]
 
         cursor.execute(
-            """UPDATE users SET user_name = %s, user_last_name = %s, 
-            user_email = %s, user_updated_at = %s, user_verified_at = %s 
+            """UPDATE users SET user_name = %s, user_last_name = %s, user_street = %s, 
+            user_postalcode = %s, user_city = %s, user_email = %s, user_updated_at = %s, 
+            user_verified_at = %s 
             WHERE user_pk = %s""",
-            (user_name, user_last_name, user_email, user_updated_at, user_verified_at, user_pk))
+            (user_name, user_last_name, user_street, user_postalcode, user_city, user_email, 
+            user_updated_at, user_verified_at, user_pk))
         if cursor.rowcount != 1: 
             x.raise_custom_exception("cannot update user", 401)
 
@@ -1590,6 +1601,9 @@ def user_update():
         session["account"].update({
             "account_name": user_name, 
             "account_last_name": user_last_name, 
+            "account_street": user_street,
+            "account_postalcode": user_postalcode,
+            "account_city": user_city,
             "account_email": user_email
         })
 
