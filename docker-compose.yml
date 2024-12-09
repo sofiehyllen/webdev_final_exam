@@ -1,0 +1,68 @@
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: webdev_final_exam_flask
+        env_file:
+            - .env
+        depends_on:
+            - mysql
+        environment:
+            DB_HOST: mysql
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            DB_NAME: company
+        ports:
+            - 80:80
+        volumes:
+            - .:/app
+
+    mysql:
+        image: mysql:latest
+        container_name: webdev_final_exam_mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: company
+        volumes:
+            - mysql_data:/var/lib/mysql
+        ports:
+            - 3306:3306
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: webdev_final_exam_phpmyadmin
+        depends_on:
+            - mysql
+        environment:
+            PMA_HOST: mysql
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        ports:
+            - 8080:80
+
+    arangodb:
+        image: arangodb:latest
+        container_name: webdev_final_exam_arangodb
+        environment:
+            ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
+        volumes:
+            - arangodb_data:/var/lib/arangodb3
+        ports:
+            - 8529:8529
+
+    redis:
+        image: redis:latest
+        container_name: webdev_final_exam_redis
+        environment: 
+            REDIS_HOST: ${REDIS_HOST}
+            REDIS_PORT: ${REDIS_PORT}
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+        ports:
+            - 6379:6379
+        volumes:
+            - redis_data:/data
+
+volumes:
+    mysql_data:
+    arangodb_data:
+    redis_data:
