@@ -934,29 +934,41 @@ def get_search_items():
         user = session.get("account", "")
         search_text = request.args.get("search_field", "").strip()
 
-        ic(search_text)
         if not search_text or search_text == "":
-            items = ""
-            restaurants = ""
-            return render_template("view_search_results.html", items=items, restaurants=restaurants, user=user)
-
+            items = []
+            restaurants = []
+            return items, restaurants, search_text
+        
         db, cursor = x.db()
 
         # Search query for items
         item_search_query = """
-            SELECT items.item_title, items.item_description, items.item_price, item_images.item_image_name
+            SELECT 
+            items.item_pk, 
+            items.item_title, 
+            items.item_description, 
+            items.item_price, 
+            GROUP_CONCAT(item_images.item_image_name) AS item_image_names
             FROM items
             LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk
             WHERE items.item_deleted_at = 0 AND 
             (items.item_title LIKE %s OR items.item_description LIKE %s)
+            GROUP BY items.item_pk
         """
         search_param = f"%{search_text}%"
         cursor.execute(item_search_query, (search_param, search_param))
         items = cursor.fetchall()
 
+        for item in items:
+            item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
+
+
         # Search query for restaurants
         restaurant_search_query = """
-            SELECT restaurants.restaurant_pk, restaurants.restaurant_name, restaurants.restaurant_image_name
+            SELECT 
+            restaurants.restaurant_pk, 
+            restaurants.restaurant_name, 
+            restaurants.restaurant_image_name
             FROM restaurants
             WHERE restaurants.restaurant_deleted_at = 0 AND
             (restaurants.restaurant_name LIKE %s)
@@ -997,7 +1009,7 @@ def view_search_items():
     if isinstance(results, str):  # The result is an HTML response
         return results
 
-    # Unpack results
+    # Unpack results into items, restaurants, and search_text
     items, restaurants, search_text = results
     return render_template(
         "view_search_results.html",
