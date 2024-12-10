@@ -6,3 +6,4 @@ flask_session/
 static/output.css
 node_modules/
 .env
+
