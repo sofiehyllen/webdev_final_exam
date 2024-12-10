@@ -141,7 +141,17 @@ def get_restaurant_addresses():
     try:
         db, cursor = x.db()
         
-        q = "SELECT restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_image_name FROM restaurants"
+        q = """SELECT 
+            restaurant_pk, 
+            restaurant_name, 
+            restaurant_street, 
+            restaurant_postalcode, 
+            restaurant_city, 
+            restaurant_image_name, 
+            restaurant_latitude, 
+            restaurant_longitude 
+        FROM restaurants"""
+
         cursor.execute(q)
         addresses = cursor.fetchall()
 
@@ -185,6 +195,7 @@ def view_customer():
 @app.get("/map-locations")
 def get_map_locations():
     try:
+
         addresses = get_restaurant_addresses()
 
         locations = []
@@ -195,9 +206,8 @@ def get_map_locations():
             postalcode = address["restaurant_postalcode"]
             city = address["restaurant_city"]
             restaurant_image_name = address["restaurant_image_name"]
-
-            full_address = f"{street}, {postalcode}, {city}"
-            location = geolocator.geocode(full_address)
+            latitude = address["restaurant_latitude"]
+            longitude = address["restaurant_longitude"]
 
             popup_html = render_template(
                 '___map_popup.html',
@@ -206,16 +216,10 @@ def get_map_locations():
                 restaurant_pk=restaurant_pk
             )
 
-            if location:
-                locations.append({
-                    "coords": [location.latitude, location.longitude],
-                    "popup": popup_html
-                })
-            else:
-                locations.append({
-                    "coords": [None, None],  # If geocoding fails
-                    "popup": f"Marker: {full_address} (Geocoding failed)"
-                })
+            locations.append({
+                "coords": [latitude, longitude] if latitude and longitude else [None, None],
+                "popup": popup_html
+            })
 
         return jsonify(locations)
     
@@ -1136,6 +1140,19 @@ def get_more_items(table_name, page_number):
 
 
 ##############################
+def get_lat_long_from_address(address):
+    try:
+        location = geolocator.geocode(address, timeout=10)  # Increase timeout
+        if location:
+            return location.latitude, location.longitude
+        else:
+            raise ValueError("Address not found")
+    except Exception as ex:
+        print(f"Error during geocoding: {ex}")
+        return None, None
+
+
+##############################
 ##############################
 ##############################
 
@@ -1235,6 +1252,10 @@ def signup():
 
 
 
+
+
+
+
 ##############################
 @app.post("/restaurants")
 @x.no_cache
@@ -1274,25 +1295,33 @@ def signup_restaurant():
         if result:
             toast = render_template("___toast.html", message="Email not available")
             return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
-
+        
+        address = f"{restaurant_street}, {restaurant_postalcode}, {restaurant_city}"
+        latitude, longitude = get_lat_long_from_address(address)
+        if latitude is None or longitude is None:
+            toast = render_template("___toast.html", message="Invalid address. Could not geocode.")
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+    
         q = '''
             INSERT INTO restaurants 
             (restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
-            restaurant_email, restaurant_password, restaurant_image_name, restaurant_created_at, 
-            restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
-            restaurant_verification_key) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            restaurant_email, restaurant_password, restaurant_image_name, restaurant_latitude, 
+            restaurant_longitude, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
+            restaurant_updated_at, restaurant_verified_at, restaurant_verification_key) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
         cursor.execute(q, (
             restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
-            restaurant_email, hashed_password, restaurant_image_name, restaurant_created_at, 
+            restaurant_email, hashed_password, restaurant_image_name, latitude, longitude, restaurant_created_at, 
             restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
             account_verification_key
         ))
         
+        db.commit()
+
         x.send_verify_email(restaurant_email, account_verification_key)
 
-        db.commit()
-    
+
         return """<template mix-redirect="/login"></template>""", 201
     
     except Exception as ex:

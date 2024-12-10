@@ -35,8 +35,8 @@ def raise_custom_exception(error, status_code):
 def db():
     db = mysql.connector.connect(
         host="mysql",      
-        user= os.getenv("MYSQL_USERNAME"), 
-        password= os.getenv("MYSQL_PASSWORD"), 
+        user= "root",
+        password= "password",
         database="company"  
     )
     cursor = db.cursor(dictionary=True)
