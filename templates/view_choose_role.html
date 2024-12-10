@@ -3,9 +3,11 @@
 <main class="w-full h-screen flex flex-col items-center">
     <div class="flex flex-col gap-4 my-auto items-center">
         {% for role in user.get("roles"): %}
-        <a href="/{{ role }}" class="flex items-center justify-center h-12 w-full px-10 rounded-lg  bg-blue-500 text-white">
-            {{ role }}
-        </a>
+        <form action="/set_role/{{ role }}" method="POST">
+            <button type="submit" class="flex items-center justify-center h-12 w-full px-10 rounded-lg bg-blue-500 text-white">
+                {{ role }}
+            </button>
+        </form>
         {% endfor %}
     </div>
 </main>

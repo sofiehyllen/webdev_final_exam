@@ -1,4 +1,4 @@
-from flask import request, make_response
+from flask import request, make_response, redirect, session, url_for
 from dotenv import load_dotenv
 from functools import wraps
 import mysql.connector
@@ -6,19 +6,23 @@ import re
 import os
 import uuid
 import smtplib
+import redis
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 from icecream import ic
+
 ic.configureOutput(prefix=f'***** | ', includeContext=True)
 
 load_dotenv()
 
-UNSPLASH_ACCESS_KEY = 'YOUR_KEY_HERE'   
-ADMIN_ROLE_PK = "16fd2706-8baf-433b-82eb-8c7fada847da"
-CUSTOMER_ROLE_PK = "c56a4180-65aa-42ec-a945-5fd21dec0538"
-PARTNER_ROLE_PK = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-RESTAURANT_ROLE_PK = "9f8c8d22-5a67-4b6c-89d7-58f8b8cb4e15"
+UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
+ADMIN_ROLE_PK = os.getenv("ADMIN_ROLE_PK")
+CUSTOMER_ROLE_PK = os.getenv("CUSTOMER_ROLE_PK")
+PARTNER_ROLE_PK = os.getenv("PARTNER_ROLE_PK")
+RESTAURANT_ROLE_PK = os.getenv("RESTAURANT_ROLE_PK")
+
+
+
 
 
 class CustomException(Exception):
@@ -29,6 +33,27 @@ class CustomException(Exception):
 
 def raise_custom_exception(error, status_code):
     raise CustomException(error, status_code)
+
+
+
+
+redis_host = os.getenv("REDIS_HOST")
+redis_port = os.getenv("REDIS_PORT") 
+redis_password = os.getenv("REDIS_PASSWORD")
+if not redis_host:
+    raise ValueError("REDIS_HOST is not set in environment variables.")
+
+try:
+    redis_client = redis.StrictRedis(
+        host=redis_host,
+        port=redis_port,
+        password=redis_password,
+        decode_responses=True
+    ) 
+    redis_client.ping()  # Test the connection
+    print("Connection to RedisLabs successful!")
+except redis.ConnectionError as e:
+    print(f"Error connecting to Redis: {e}")
 
 
 ##############################
@@ -55,8 +80,35 @@ def no_cache(view):
     return no_cache_view
 
 
-##############################
 
+##############################
+def require_role(required_role):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user = session.get("account")
+            if not user:
+                return redirect(url_for("view_login"))
+
+            user_pk = user.get("account_pk")
+            role = redis_client.get(f"user:{user_pk}:role")
+
+            # If multiple roles exist and no active role is set
+            if not role and len(user.get("roles", [])) > 1:
+                return redirect(url_for("view_choose_role"))
+
+            # Check if the required role is present
+            if required_role not in user.get("roles", []):
+                return redirect(url_for("view_login"))
+
+            # Role is valid; proceed to the view
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+
+##############################
 def allow_origin(origin="*"):
     def decorator(f):
         @wraps(f)

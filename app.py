@@ -3,11 +3,11 @@ from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
+from x import redis_client
 import decimal
 import x
 import uuid 
 import time
-import redis
 import os
 import json
 
@@ -25,23 +25,8 @@ app.config['SESSION_TYPE'] = 'filesystem'  # or 'redis', etc.
 Session(app)
 
 
-redis_host = os.getenv("REDIS_HOST")
-redis_port = os.getenv("REDIS_PORT") 
-redis_password = os.getenv("REDIS_PASSWORD")
-if not redis_host:
-    raise ValueError("REDIS_HOST is not set in environment variables.")
 
-try:
-    redis_client = redis.StrictRedis(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password,
-        decode_responses=True
-    ) 
-    redis_client.ping()  # Test the connection
-    print("Connection to RedisLabs successful!")
-except redis.ConnectionError as e:
-    print(f"Error connecting to Redis: {e}")
+
 
 # app.secret_key = "your_secret_key"
 
@@ -57,46 +42,30 @@ def _________GET_________(): pass
 
 
 
-@app.get("/test-set-redis")
-def view_test_set_redis():
-    redis_host = "redis"
-    redis_port = 6379
-    redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)    
-    redis_client.set("name", "Santiago", ex=10)
-    return "name saved"
-
-@app.get("/test-get-redis")
-def view_test_get_redis():
-    redis_host = "redis"
-    redis_port = 6379
-    redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)    
-    name = redis_client.get("name")
-    if not name: name = "no name"
-    return name
-
-
-
 ##############################
 @app.get("/")
-def view_index():
+def view_index():    
     return render_template("view_index.html")
 
 
-#TODO: check if these should be calling "account"
+
 ##############################
 @app.get("/signup")
 @x.no_cache
 def view_signup():  
-    ic(session)
-    if session.get("user"):
-        if len(session.get("user").get("roles")) > 1:
-            return redirect(url_for("view_choose_role")) 
-        if "admin" in session.get("user").get("roles"):
+    user = session.get("account")
+    if user:
+        roles = user.get("roles", [])
+        if "customer" in roles:
+            return redirect(url_for("view_customer"))
+        if "admin" in roles:
             return redirect(url_for("view_admin"))
-        if "customer" in session.get("user").get("roles"):
-            return redirect(url_for("view_customer")) 
-        if "partner" in session.get("user").get("roles"):
-            return redirect(url_for("view_partner"))         
+        if "partner" in roles:
+            return redirect(url_for("view_partner"))
+        if "restaurant" in roles:
+            return redirect(url_for("view_restaurant"))       
+        if len(roles) > 1:
+            return redirect(url_for("view_choose_role"))
     return render_template("view_signup.html", x=x, title="Signup")
 
 
@@ -105,12 +74,19 @@ def view_signup():
 @app.get("/signup_restaurant")
 @x.no_cache
 def view_signup_restaurant():  
-    ic(session)
-    if session.get("user"):
-        if len(session.get("user").get("roles")) > 1:
-            return redirect(url_for("view_choose_role")) 
-        if "restaurant" in session.get("user").get("roles"):
-            return redirect(url_for("view_restaurant"))         
+    user = session.get("account")
+    if user:
+        roles = user.get("roles", [])
+        if "customer" in roles:
+            return redirect(url_for("view_customer"))
+        if "admin" in roles:
+            return redirect(url_for("view_admin"))
+        if "partner" in roles:
+            return redirect(url_for("view_partner"))
+        if "restaurant" in roles:
+            return redirect(url_for("view_restaurant"))       
+        if len(roles) > 1:
+            return redirect(url_for("view_choose_role"))    
     return render_template("view_signup_restaurant.html", x=x, title="Signup Restaurant")
 
 
@@ -119,46 +95,124 @@ def view_signup_restaurant():
 @app.get("/login")
 @x.no_cache
 def view_login():  
-    ic(session)
-    # print(session, flush=True)  
-    if session.get("account"):
-        if len(session.get("account").get("roles")) > 1:
-            return redirect(url_for("view_choose_role")) 
-        if "admin" in session.get("account").get("roles"):
+    user = session.get("account")
+    if user:
+        roles = user.get("roles", [])
+        if "customer" in roles:
+            return redirect(url_for("view_customer"))
+        if "admin" in roles:
             return redirect(url_for("view_admin"))
-        if "customer" in session.get("account").get("roles"):
-            return redirect(url_for("view_customer")) 
-        if "partner" in session.get("account").get("roles"):
-            return redirect(url_for("view_partner"))         
-        if "restaurant" in session.get("account").get("roles"):
-            return redirect(url_for("view_restaurant"))         
+        if "partner" in roles:
+            return redirect(url_for("view_partner"))
+        if "restaurant" in roles:
+            return redirect(url_for("view_restaurant"))       
+        if len(roles) > 1:
+            return redirect(url_for("view_choose_role"))          
     return render_template("view_login.html", x=x, title="Login", message=request.args.get("message", ""))
 
 
 
 ##############################
-def get_restaurant_addresses():
+@app.get("/forgot-password")
+@x.no_cache
+def view_forgot_password():
+    return render_template("view_forgot_password.html", x=x, title="Forgot password")
+
+
+
+##############################
+@app.get("/reset-password/<reset_password_key>")
+@x.no_cache
+def view_reset_password(reset_password_key):
+    if not reset_password_key:
+        return redirect(url_for("view_login"))
+    return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
+
+
+
+##############################
+@app.get("/choose-role")
+@x.no_cache
+def view_choose_role():
+    user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
+    if not len(user.get("roles")) >= 2:
+        return redirect(url_for("view_login"))
+    return render_template("view_choose_role.html", user=user, title="Choose role")
+
+
+
+##############################
+@app.get("/customer")
+@x.require_role("customer")
+@x.no_cache
+def view_customer():
+    user = session.get("account", "")
+    address = get_restaurants_data()
+    return render_template("view_customer.html", user=user, address=address)
+
+
+
+##############################
+@app.get("/partner")
+@x.require_role("partner")
+@x.no_cache
+def view_partner():
+    user = session.get("account", "")
+    return render_template("view_partner.html", user=user)
+
+
+
+##############################
+@app.get("/restaurant")
+@x.require_role("restaurant")
+@x.no_cache
+def view_restaurant():
+    user = session.get("account")
+    return render_template("view_restaurant.html", user=user)
+
+
+
+##############################
+@app.get("/admin")
+@x.require_role("admin")
+@x.no_cache
+def view_admin():
+    user = session.get("account")
+    return render_template("view_admin.html", user=user)
+
+
+
+##############################
+def get_restaurants_data(limit=None, offset=None):
     try:
         db, cursor = x.db()
         
-        q = """SELECT 
-            restaurant_pk, 
-            restaurant_name, 
-            restaurant_street, 
-            restaurant_postalcode, 
-            restaurant_city, 
-            restaurant_image_name, 
-            restaurant_latitude, 
-            restaurant_longitude 
-        FROM restaurants"""
+        q = """
+            SELECT 
+                restaurant_pk, 
+                restaurant_name, 
+                restaurant_street, 
+                restaurant_postalcode, 
+                restaurant_city, 
+                restaurant_email,
+                restaurant_image_name, 
+                restaurant_latitude, 
+                restaurant_longitude 
+            FROM restaurants
+            WHERE restaurant_deleted_at = 0"""
 
+        if limit is not None and offset is not None:
+            q += f" LIMIT {limit} OFFSET {offset}"
+    
         cursor.execute(q)
-        addresses = cursor.fetchall()
+        all_restaurants = cursor.fetchall()
 
-        if not addresses:
-            x.raise_custom_exception("no addresses available")
+        if not all_restaurants:
+            x.raise_custom_exception("no data for table restaurants available", 404)
 
-        return addresses
+        return all_restaurants
     
     except Exception as ex:
         ic(ex)
@@ -177,17 +231,7 @@ def get_restaurant_addresses():
 
 
 
-##############################
-@app.get("/customer")
-@x.no_cache
-def view_customer():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    # if len(user.get("roles", "")) > 1:
-    #     return redirect(url_for("view_choose_role"))
-    address = get_restaurant_addresses()
-    return render_template("view_customer.html", user=user, address=address)
+
 
 
 
@@ -195,16 +239,12 @@ def view_customer():
 @app.get("/map-locations")
 def get_map_locations():
     try:
-
-        addresses = get_restaurant_addresses()
-
+        addresses = get_restaurants_data()
         locations = []
+
         for address in addresses:
             restaurant_pk = address["restaurant_pk"]
             restaurant_name = address["restaurant_name"]
-            street = address["restaurant_street"]
-            postalcode = address["restaurant_postalcode"]
-            city = address["restaurant_city"]
             restaurant_image_name = address["restaurant_image_name"]
             latitude = address["restaurant_latitude"]
             longitude = address["restaurant_longitude"]
@@ -234,23 +274,22 @@ def get_map_locations():
 
 ##############################
 @app.get("/customer/restaurants")
+@x.require_role("customer")
 @x.no_cache
 def view_all_restaurants():
     try:
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
         user = session.get("account")
-        if len(user.get("roles", "")) > 1:
-            return redirect(url_for("view_choose_role"))
 
         db, cursor = x.db()
-
-        cursor.execute("""
-                        SELECT restaurant_name, restaurant_pk, restaurant_image_name 
-                        FROM restaurants 
-                        WHERE restaurant_deleted_at = 0
-                        LIMIT 0,6""")
-        
+        q = """
+                SELECT 
+                restaurant_name, 
+                restaurant_pk, 
+                restaurant_image_name 
+                FROM restaurants 
+                WHERE restaurant_deleted_at = 0
+                LIMIT 0,6"""
+        cursor.execute(q)
         restaurants = cursor.fetchall()
 
         next_page = 2
@@ -271,22 +310,20 @@ def view_all_restaurants():
 
 ##############################
 @app.get("/order-confirmation")
+@x.require_role("customer")
 @x.no_cache
 def view_order_confirmation():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
     user = session.get("account")
     return render_template("view_order_confirmation.html", user=user)
 
 
-# Utility function to fetch items with images from the database
+
 def fetch_items(query, params=None):
     try:
         db, cursor = x.db()
         cursor.execute(query, params)
         items = cursor.fetchall()
 
-        # Process each item to split image names into a list
         for item in items:
             item['item_image_names'] = item['item_image_names'].split(',') if item['item_image_names'] else []
 
@@ -417,16 +454,12 @@ def get_items_from_basket(basket):
 
 
 @app.get("/customer/view-basket")
+@x.require_role("customer")
 @x.no_cache
 def view_basket():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    
     user = session.get("account")
-    if not "customer" in user.get("roles", ""):
-        return redirect(url_for("view_login"))
-    
     user_pk = user.get("account_pk")
+
     basket = redis_client.get(user_pk)
 
     if basket:
@@ -444,7 +477,6 @@ def view_basket():
 
         return render_template('view_basket.html', items=items, user=user, total_price=total_price)
     
-    # Handle the case where the basket is empty
     total_price = 00.00  # Default to 0 if the basket is empty
     return render_template('view_basket.html', items=[], user=user, total_price=total_price)
 
@@ -618,22 +650,26 @@ def decrease_quantity(item_pk):
 
 ##############################
 @app.get("/customer/restaurant/<restaurant_pk>")
+@x.require_role("customer")
 @x.no_cache
-def view_customer_restaurant_items(restaurant_pk):
+def view_single_restaurant(restaurant_pk):
     try:
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
         user = session.get("account")
-        if len(user.get("roles", "")) > 1:
-            return redirect(url_for("view_choose_role"))
-
 
         db, cursor = x.db()
 
-        cursor.execute(
-            "SELECT restaurant_pk, restaurant_name, restaurant_image_name FROM restaurants WHERE restaurant_pk = %s AND restaurant_deleted_at = 0",
-            (restaurant_pk,))        
+        q = """
+            SELECT 
+                restaurant_pk, 
+                restaurant_name, 
+                restaurant_image_name 
+            FROM restaurants 
+            WHERE restaurant_pk = %s 
+            AND restaurant_deleted_at = 0"""
+        
+        cursor.execute(q,(restaurant_pk,))        
         restaurant = cursor.fetchone()
+
         if not restaurant:
             return render_template("error.html", message="Restaurant not found"), 404
 
@@ -644,7 +680,6 @@ def view_customer_restaurant_items(restaurant_pk):
             (restaurant_pk,)
         )
         items = cursor.fetchall()
-
 
         return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items)
     
@@ -660,45 +695,19 @@ def view_customer_restaurant_items(restaurant_pk):
 
 
 
-##############################
-@app.get("/partner")
-@x.no_cache
-def view_partner():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    # if len(user.get("roles", "")) > 1:
-    #     return redirect(url_for("view_choose_role"))
-    if not "partner" in user.get("roles", ""):
-        return redirect(url_for("view_login"))
-    return render_template("view_partner.html", user=user)
 
 
-##############################
-@app.get("/admin")
-@x.no_cache
-def view_admin():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    if not "admin" in user.get("roles", ""):
-        return redirect(url_for("view_login"))
-    return render_template("view_admin.html", user=user)
 
 
 
 ##############################
 @app.get("/admin/users")
+@x.require_role("admin")
+@x.no_cache
 def view_all_users():
     try:
-        # Ensure the user is an admin
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
         user = session.get("account")
-        if not "admin" in user.get("roles", ""):
-            return redirect(url_for("view_login"))
         
-        # Connect to DB and fetch users
         db, cursor = x.db()
         q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_roles FROM accounts'
         cursor.execute(q)
@@ -715,18 +724,16 @@ def view_all_users():
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
 
+
+
 ##############################
 @app.get("/admin/items")
+@x.require_role("admin")
+@x.no_cache
 def view_all_items_admin():
     try:
-        # Ensure the user is an admin
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
         user = session.get("account")
-        if not "admin" in user.get("roles", ""):
-            return redirect(url_for("view_login"))
-        
-        # Connect to DB and fetch users
+
         db, cursor = x.db()
         q = '''
             SELECT 
@@ -758,49 +765,27 @@ def view_all_items_admin():
         if "db" in locals(): db.close()
 
 
-##############################
-@app.get("/restaurant")
-@x.no_cache
-def view_restaurant():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
-    if not "restaurant" in user.get("roles", ""):
-        return redirect(url_for("view_login"))    
-    return render_template("view_restaurant.html", user=user)
+
 
 
 
 ##############################
 @app.get("/restaurant/create-item")
+@x.require_role("restaurant")
 @x.no_cache
 def view_create_item():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
     user = session.get("account")
-    if len(user.get("roles", "")) > 1:
-        return redirect(url_for("view_choose_role"))
-    if not "restaurant" in user.get("roles", ""):
-        return redirect(url_for("view_login"))  
     return render_template("view_create_item.html", user=user, x=x)
 
 
 
 ##############################
 @app.get("/restaurant/my-items")
+@x.require_role("restaurant")
 @x.no_cache
 def view_my_items():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
     user = session.get("account")
-    if not "restaurant" in user.get("roles", ""):
-        return redirect(url_for("view_login"))  
-    
     restaurant_pk = user.get("account_pk", "")
-    if not restaurant_pk:
-        return redirect(url_for("view_login"))  
 
     items = get_items_for_restaurant(restaurant_pk)
 
@@ -839,22 +824,17 @@ def get_items_for_restaurant(restaurant_pk):
 
 ##############################
 @app.get("/restaurant/item/<item_pk>")
+@x.require_role("restaurant")
+@x.no_cache
 def view_edit_item(item_pk):
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
-    
         user = session.get("account")
-        if not "restaurant" in user.get("roles", ""):
-            return redirect(url_for("view_login"))  
-        restaurant_pk = user.get("account_pk", "")
-        if not restaurant_pk:
-            return redirect(url_for("view_login"))
-        
+
         item = get_item_for_edit(item_pk)
         if isinstance(item, tuple):
             return item
 
         return render_template("view_edit_item.html", item=item, user=user, x=x)
+
 
 def get_item_for_edit(item_pk):
     try:
@@ -895,34 +875,9 @@ def get_item_for_edit(item_pk):
 
 
 
-##############################
-@app.get("/choose-role")
-@x.no_cache
-def view_choose_role():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
-    if not len(session.get("account").get("roles")) >= 2:
-        return redirect(url_for("view_login"))
-    user = session.get("account")
-    return render_template("view_choose_role.html", user=user, title="Choose role")
 
 
 
-##############################
-@app.get("/forgot-password")
-@x.no_cache
-def view_forgot_password():
-    return render_template("view_forgot_password.html", x=x, title="Forgot password")
-
-
-
-##############################
-@app.get("/reset-password/<reset_password_key>")
-@x.no_cache
-def view_reset_password(reset_password_key):
-    if not reset_password_key:
-        return redirect(url_for("view_login"))
-    return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
 
 
 
@@ -1162,6 +1117,14 @@ def _________POST_________(): pass
 ##############################
 ##############################
 
+@app.route("/set_role/<role>", methods=["POST"])
+def set_role(role):
+    user_pk = session.get('account').get("account_pk") 
+    redis_client.set(f"user:{user_pk}:role", role)  
+    return redirect(f"/{role}")  
+
+
+##############################
 @app.post("/logout")
 def logout():
     session.pop("account", None)
@@ -1340,6 +1303,8 @@ def signup_restaurant():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
 
 ##############################
 @app.post("/login")
