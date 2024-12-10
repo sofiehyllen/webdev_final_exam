@@ -1,19 +1,12 @@
 {% include "_top.html" %}
 
-<main class="w-full d-flex">
-    <div id="items" class="w-full h-100vh text-a-center">
-        <!-- <button class="px-20 py-4 rounded-sm"
-            mix-get="/items/page/1"
-        >
-            More
-        </button> -->
-        <h1>Welcome</h1>
-        <button>
-            <a href="{{url_for('view_login')}}" class="text-a-center">Login</a>
-        </button>
-        <button>
-            <a href="{{url_for('view_signup')}}" class="text-a-center">Sign up</a>
-        </button>
+<main class="w-full flex">
+    <div id="items" class="w-full h-screen text-center pt-32">
+        <h1 class="text-3xl font-semibold">Welcome</h1>
+        <div class="pt-12">
+            <a href="{{url_for('view_login')}}" class="btn-primary mr-6">Login</a>
+            <a href="{{url_for('view_signup')}}" class="btn-primary">Sign up</a>
+        </div>
     </div>
 </main>
 

@@ -1,16 +1,18 @@
 from flask import request, make_response
+from dotenv import load_dotenv
 from functools import wraps
 import mysql.connector
 import re
 import os
 import uuid
-
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from icecream import ic
 ic.configureOutput(prefix=f'***** | ', includeContext=True)
+
+load_dotenv()
 
 UNSPLASH_ACCESS_KEY = 'YOUR_KEY_HERE'   
 ADMIN_ROLE_PK = "16fd2706-8baf-433b-82eb-8c7fada847da"
@@ -19,15 +21,11 @@ PARTNER_ROLE_PK = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 RESTAURANT_ROLE_PK = "9f8c8d22-5a67-4b6c-89d7-58f8b8cb4e15"
 
 
-# form to get data from input fields
-# args to get data from the url
-# values to get data from the url and from the form
-
 class CustomException(Exception):
     def __init__(self, message, code):
-        super().__init__(message)  # Initialize the base class with the message
-        self.message = message  # Store additional information (e.g., error code)
-        self.code = code  # Store additional information (e.g., error code)
+        super().__init__(message) 
+        self.message = message  
+        self.code = code  
 
 def raise_custom_exception(error, status_code):
     raise CustomException(error, status_code)
@@ -36,10 +34,10 @@ def raise_custom_exception(error, status_code):
 ##############################
 def db():
     db = mysql.connector.connect(
-        host="mysql",      # Replace with your MySQL server's address or docker service name "mysql"
-        user="root",  # Replace with your MySQL username
-        password="password",  # Replace with your MySQL password
-        database="company"   # Replace with your MySQL database name
+        host="mysql",      
+        user= os.getenv("MYSQL_USERNAME"), 
+        password= os.getenv("MYSQL_PASSWORD"), 
+        database="company"  
     )
     cursor = db.cursor(dictionary=True)
     return db, cursor
@@ -255,8 +253,8 @@ def validate_item_image(form_field):
 def send_email(to_email, subject, body):
     try:
         # Email and password of the sender's Gmail account
-        sender_email = "exampythonmail@gmail.com"
-        password = "qtgoaneaffxkqcjp"  # Use an App Password if 2FA is on
+        sender_email = os.getenv("COMPANY_EMAIL")
+        password = os.getenv("COMPANY_EMAIL_PASSWORD")  # Use an App Password if 2FA is on
 
         # Create the email message
         message = MIMEMultipart()

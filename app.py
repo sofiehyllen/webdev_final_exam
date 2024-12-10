@@ -2,6 +2,7 @@ from flask import Flask, session, render_template, redirect, url_for, make_respo
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+from dotenv import load_dotenv
 import decimal
 import x
 import uuid 
@@ -16,6 +17,8 @@ ic.configureOutput(prefix=f'***** | ', includeContext=True)
 
 from geopy.geocoders import Nominatim
 geolocator = Nominatim(user_agent="webdev_final_exam")
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'  # or 'redis', etc.
