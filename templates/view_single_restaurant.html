@@ -1,32 +1,22 @@
 {% include "_top_logged.html" %}
 
 <main class="w-full">
-    <div class="w-full h-60 overflow-hidden flex justify-center items-center rounded-2xl mt-10">
-        <img
-            src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
-            alt="{{ restaurant.restaurant_name }}"
-            class="w-full h-full object-cover " />
-    </div>
-    <h1 class="text-4xl font-bold pt-5">{{ restaurant.restaurant_name }}</h1>
-
-    <div class="flex flex-col items-center">
+        <div class="relative">
+            <div class="w-full h-80 overflow-hidden flex justify-center items-center rounded-2xl mt-10">
+                <img
+                    src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
+                    alt="{{ restaurant.restaurant_name }}"
+                    class="w-full h-full object-cover " />
+            </div>
+            <div class="absolute bottom-5 left-5">
+                <h1 class="text-6xl text-white font-bold">{{ restaurant.restaurant_name }}</h1>
+            </div>
+        </div>
+        <h2 class="text-4xl font-bold pt-10 pb-6">Menu</h2>
+        <div class="flex flex-col items-center">
         <div class="flex flex-wrap justify-center items-center gap-5">
             {% for item in items %}
-            <article class="flex p-3 shadow-md rounded-lg h-30 max-w-96 justify-between">
-                <div class="w-2/3 flex flex-col justify-between">
-                    <div>
-                        <p class="font-semibold m-0">{{ item.item_title }}</p>
-                        <p class="text-gray-600 text-sm font-light m-0">{{ item.item_description }}</p>
-                    </div>
-                    <p class="text-blue-500 text-sm font-light m-0">DKK {{ item.item_price }}</p>
-                </div>
-                <div class="w-1/3 h-20 overflow-hidden flex justify-center items-center rounded-lg">
-                    <img
-                        src="{{ url_for('static', filename='item_images/' + item.item_image_name) }}"
-                        alt="{{ item.item_title }}"
-                        class="h-full w-full object-cover" />
-                </div>
-            </article>
+                {% include "__item.html"%}
             {% endfor %}
         </div>
     </div>

@@ -1,10 +1,11 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full">
-    <h1 class="text-2xl font-semibold mb-6">All Restaurants</h1>
+<main class="w-full py-20">
+    <h1 class="text-5xl font-extrabold mb-6">Restaurants near me</h1>
+    <h2 class="text-3xl font-semibold mb-6">All Restaurants</h2>
 
     <div class="flex flex-col items-center ">
-        <div id="restaurants" class="flex flex-wrap justify-center items-center gap-5 pb-5">
+        <div id="restaurants" class="flex flex-wrap justify-center items-center gap-5 pb-10">
             {% for restaurant in restaurants %}
                 {% include "__restaurant.html" %}
             {% endfor %}

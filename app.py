@@ -287,8 +287,11 @@ def view_all_restaurants(role=None):
         db, cursor = x.db()
         q = """
                 SELECT 
-                restaurant_name, 
                 restaurant_pk, 
+                restaurant_name, 
+                restaurant_street,
+                restaurant_postalcode,
+                restaurant_city,
                 restaurant_image_name 
                 FROM restaurants 
                 WHERE restaurant_deleted_at = 0
@@ -692,13 +695,21 @@ def view_single_restaurant(restaurant_pk, role=None):
         if not restaurant:
             return render_template("error.html", message="Restaurant not found"), 404
 
-        cursor.execute(
-            "SELECT item_title, item_description, item_price, item_image_name FROM items "
-            "LEFT JOIN item_images ON items.item_pk = item_images.item_image_item_fk "
-            "WHERE item_restaurant_fk = %s AND item_deleted_at = 0",
-            (restaurant_pk,)
-        )
-        items = cursor.fetchall()
+        query = '''
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name) AS item_image_names
+            FROM items i
+            LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
+            WHERE i.item_deleted_at = 0 AND item_restaurant_fk = %s
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
+            LIMIT 0,6
+        '''
+
+        items = fetch_items(query, (restaurant_pk,))
 
         return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items, role=role, basket_quantity=basket_quantity)
     
