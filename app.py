@@ -147,10 +147,10 @@ def view_choose_role():
 @app.get("/customer")
 @x.require_role("customer")
 @x.no_cache
-def view_customer():
+def view_customer(role=None):
     user = session.get("account", "")
     address = get_restaurants_data()
-    return render_template("view_customer.html", user=user, address=address)
+    return render_template("view_customer.html", user=user, address=address, role=role)
 
 
 
@@ -158,15 +158,14 @@ def view_customer():
 @app.get("/partner")
 @x.require_role("partner")
 @x.no_cache
-def view_partner():
+def view_partner(role=None):
     user = session.get("account", "")
-    return render_template("view_partner.html", user=user)
+    return render_template("view_partner.html", user=user, role=role)
 
 
 
 ##############################
 @app.get("/restaurant")
-@x.require_role("restaurant")
 @x.no_cache
 def view_restaurant():
     user = session.get("account")
@@ -176,7 +175,6 @@ def view_restaurant():
 
 ##############################
 @app.get("/admin")
-@x.require_role("admin")
 @x.no_cache
 def view_admin():
     user = session.get("account")
@@ -276,7 +274,7 @@ def get_map_locations():
 @app.get("/customer/restaurants")
 @x.require_role("customer")
 @x.no_cache
-def view_all_restaurants():
+def view_all_restaurants(role=None):
     try:
         user = session.get("account")
 
@@ -294,7 +292,7 @@ def view_all_restaurants():
 
         next_page = 2
 
-        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants, next_page=next_page, table_name="restaurants")
+        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants, next_page=next_page, table_name="restaurants", role=role)
     
     except Exception as ex:
         ic(ex)
@@ -312,9 +310,9 @@ def view_all_restaurants():
 @app.get("/order-confirmation")
 @x.require_role("customer")
 @x.no_cache
-def view_order_confirmation():
+def view_order_confirmation(role=None):
     user = session.get("account")
-    return render_template("view_order_confirmation.html", user=user)
+    return render_template("view_order_confirmation.html", user=user, role=role)
 
 
 
@@ -342,8 +340,9 @@ def fetch_items(query, params=None):
 
 
 @app.get("/customer/items")
+@x.require_role('customer')
 @x.no_cache
-def view_all_items():
+def view_all_items(role=None):
     try:
         if not session.get("account", ""): 
             return redirect(url_for("view_login"))
@@ -367,7 +366,7 @@ def view_all_items():
 
         next_page = 2
 
-        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page, table_name="items")
+        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page, table_name="items", role=role)
     
     except Exception as ex:
         ic(ex)
@@ -456,7 +455,7 @@ def get_items_from_basket(basket):
 @app.get("/customer/view-basket")
 @x.require_role("customer")
 @x.no_cache
-def view_basket():
+def view_basket(role=None):
     user = session.get("account")
     user_pk = user.get("account_pk")
 
@@ -475,10 +474,10 @@ def view_basket():
         total_price = sum(item['item_price'] * item['quantity'] for item in items)
         total_price = round(total_price, 2)  # Round to 2 decimal places
 
-        return render_template('view_basket.html', items=items, user=user, total_price=total_price)
+        return render_template('view_basket.html', items=items, user=user, total_price=total_price, role=role)
     
     total_price = 00.00  # Default to 0 if the basket is empty
-    return render_template('view_basket.html', items=[], user=user, total_price=total_price)
+    return render_template('view_basket.html', items=[], user=user, total_price=total_price, role=role)
 
 
 
@@ -652,7 +651,7 @@ def decrease_quantity(item_pk):
 @app.get("/customer/restaurant/<restaurant_pk>")
 @x.require_role("customer")
 @x.no_cache
-def view_single_restaurant(restaurant_pk):
+def view_single_restaurant(restaurant_pk, role=None):
     try:
         user = session.get("account")
 
@@ -681,7 +680,7 @@ def view_single_restaurant(restaurant_pk):
         )
         items = cursor.fetchall()
 
-        return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items)
+        return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items, role=role)
     
     except Exception as ex:
         ic(ex)
@@ -702,7 +701,6 @@ def view_single_restaurant(restaurant_pk):
 
 ##############################
 @app.get("/admin/users")
-@x.require_role("admin")
 @x.no_cache
 def view_all_users():
     try:
@@ -728,7 +726,6 @@ def view_all_users():
 
 ##############################
 @app.get("/admin/items")
-@x.require_role("admin")
 @x.no_cache
 def view_all_items_admin():
     try:
@@ -771,7 +768,6 @@ def view_all_items_admin():
 
 ##############################
 @app.get("/restaurant/create-item")
-@x.require_role("restaurant")
 @x.no_cache
 def view_create_item():
     user = session.get("account")
@@ -781,7 +777,6 @@ def view_create_item():
 
 ##############################
 @app.get("/restaurant/my-items")
-@x.require_role("restaurant")
 @x.no_cache
 def view_my_items():
     user = session.get("account")
@@ -824,7 +819,6 @@ def get_items_for_restaurant(restaurant_pk):
 
 ##############################
 @app.get("/restaurant/item/<item_pk>")
-@x.require_role("restaurant")
 @x.no_cache
 def view_edit_item(item_pk):
         user = session.get("account")
@@ -887,7 +881,10 @@ def view_edit_profile():
     if not session.get("account", ""): 
         return redirect(url_for("view_login"))
     user = session.get("account")
-    return render_template("view_edit_profile.html", user=user, x=x)
+    user_pk = user.get("account_pk")
+    role = redis_client.get(f"user:{user_pk}:role")
+    role = role if role else ""
+    return render_template("view_edit_profile.html", user=user, x=x, role=role)
 
 
 

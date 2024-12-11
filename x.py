@@ -100,6 +100,11 @@ def require_role(required_role):
             # Check if the required role is present
             if required_role not in user.get("roles", []):
                 return redirect(url_for("view_login"))
+            
+            if role != required_role:
+                return redirect(url_for(f"view_login"))
+
+            kwargs["role"] = role if role else None  # Decode Redis byte string if necessary
 
             # Role is valid; proceed to the view
             return func(*args, **kwargs)

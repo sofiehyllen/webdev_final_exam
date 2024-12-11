@@ -17,9 +17,9 @@
         <header>
             {% if 'restaurant' in user.roles %}
                 {% include "__header_restaurant.html"%}
-            {% elif 'customer' in user.roles %}
+            {% elif 'customer' in role %}
                 {% include "__header_customer.html"%}
-            {% elif 'partner' in user.roles %}
+            {% elif 'partner' in role %}
                 {% include "__header_partner.html"%}
             {% elif 'admin' in user.roles %}
                 {% include "__header_admin.html"%}
