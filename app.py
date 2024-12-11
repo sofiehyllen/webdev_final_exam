@@ -169,6 +169,8 @@ def view_partner(role=None):
 @x.no_cache
 def view_restaurant():
     user = session.get("account")
+    if not 'restaurant' in user.get("roles"):
+        return redirect(url_for("view_login"))
     return render_template("view_restaurant.html", user=user)
 
 
@@ -178,6 +180,8 @@ def view_restaurant():
 @x.no_cache
 def view_admin():
     user = session.get("account")
+    if not 'admin' in user.get("roles"):
+        return redirect(url_for("view_login"))
     return render_template("view_admin.html", user=user)
 
 
@@ -705,6 +709,8 @@ def view_single_restaurant(restaurant_pk, role=None):
 def view_all_users():
     try:
         user = session.get("account")
+        if not 'admin' in user.get("roles"):
+            return redirect(url_for("view_login"))
         
         db, cursor = x.db()
         q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_roles FROM accounts'
@@ -730,7 +736,8 @@ def view_all_users():
 def view_all_items_admin():
     try:
         user = session.get("account")
-
+        if not 'admin' in user.get("roles"):
+            return redirect(url_for("view_login"))
         db, cursor = x.db()
         q = '''
             SELECT 
@@ -771,6 +778,8 @@ def view_all_items_admin():
 @x.no_cache
 def view_create_item():
     user = session.get("account")
+    if not 'restaurant' in user.get("roles"):
+        return redirect(url_for("view_login"))
     return render_template("view_create_item.html", user=user, x=x)
 
 
@@ -781,6 +790,8 @@ def view_create_item():
 def view_my_items():
     user = session.get("account")
     restaurant_pk = user.get("account_pk", "")
+    if not 'restaurant' in user.get("roles"):
+        return redirect(url_for("view_login"))
 
     items = get_items_for_restaurant(restaurant_pk)
 
@@ -821,13 +832,15 @@ def get_items_for_restaurant(restaurant_pk):
 @app.get("/restaurant/item/<item_pk>")
 @x.no_cache
 def view_edit_item(item_pk):
-        user = session.get("account")
+    user = session.get("account")
+    if not 'restaurant' in user.get("roles"):
+        return redirect(url_for("view_login"))
 
-        item = get_item_for_edit(item_pk)
-        if isinstance(item, tuple):
-            return item
+    item = get_item_for_edit(item_pk)
+    if isinstance(item, tuple):
+        return item
 
-        return render_template("view_edit_item.html", item=item, user=user, x=x)
+    return render_template("view_edit_item.html", item=item, user=user, x=x)
 
 
 def get_item_for_edit(item_pk):
@@ -869,12 +882,6 @@ def get_item_for_edit(item_pk):
 
 
 
-
-
-
-
-
-
 ##############################
 @app.get("/edit-profile")
 def view_edit_profile():
@@ -891,10 +898,13 @@ def view_edit_profile():
 ##############################
 @app.get("/edit-restaurant-profile")
 def view_edit_restaurant_profile():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
     user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
+    if not 'restaurant' in user.get("roles"):
+        return redirect(url_for("view_login"))
     return render_template("view_edit_restaurant_profile.html", user=user, x=x)
+
 
 
 ##############################
@@ -964,6 +974,7 @@ def get_search_items():
 
 ##############################
 @app.get("/search")
+@x.require_role('customer')
 @x.no_cache
 def view_search_items():
     user = session.get("account", "")
@@ -985,7 +996,8 @@ def view_search_items():
         items=items,
         restaurants=restaurants,
         search_text=search_text,
-        user=user
+        user=user,
+        role=role
     )
 
 

@@ -1,6 +1,6 @@
 <div class="flex w-full py-5 justify-between border-b border-gray-100">
   <div class="pl-20">
-    <a class="text-3xl font-semibold" href="/{{ role }}">Wolt</a>
+    <a class="text-3xl font-semibold" href="/{{ role if role else user.roles[0] }}">Wolt</a>
     {% if user and user.roles|length > 1 %}
     <a href="{{ url_for('view_choose_role')}}">Change role</a>
     {% endif %}
