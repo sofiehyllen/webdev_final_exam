@@ -14,7 +14,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 
 // Create a custom icon for the marker
 var customIcon = L.icon({
-  iconUrl: 'static/pin.svg', 
+  iconUrl: 'static/svg/pin.svg', 
   iconSize: [32, 32], 
   iconAnchor: [16, 32], 
   popupAnchor: [0, -32] 

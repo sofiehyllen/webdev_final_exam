@@ -150,7 +150,8 @@ def view_choose_role():
 def view_customer(role=None):
     user = session.get("account", "")
     address = get_restaurants_data()
-    return render_template("view_customer.html", user=user, address=address, role=role)
+    basket_quantity = get_basket_and_quantity(user.get('account_pk'))
+    return render_template("view_customer.html", user=user, address=address, role=role, basket_quantity=basket_quantity)
 
 
 
@@ -281,6 +282,7 @@ def get_map_locations():
 def view_all_restaurants(role=None):
     try:
         user = session.get("account")
+        basket_quantity = get_basket_and_quantity(user.get('account_pk'))
 
         db, cursor = x.db()
         q = """
@@ -296,7 +298,7 @@ def view_all_restaurants(role=None):
 
         next_page = 2
 
-        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants, next_page=next_page, table_name="restaurants", role=role)
+        return render_template("view_all_restaurants.html", user=user, restaurants=restaurants, next_page=next_page, table_name="restaurants", role=role, basket_quantity=basket_quantity)
     
     except Exception as ex:
         ic(ex)
@@ -348,9 +350,8 @@ def fetch_items(query, params=None):
 @x.no_cache
 def view_all_items(role=None):
     try:
-        if not session.get("account", ""): 
-            return redirect(url_for("view_login"))
         user = session.get("account")
+        basket_quantity = get_basket_and_quantity(user.get('account_pk'))
 
         query = '''
             SELECT 
@@ -370,7 +371,7 @@ def view_all_items(role=None):
 
         next_page = 2
 
-        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page, table_name="items", role=role)
+        return render_template("view_all_items.html", user=user, items=items, x=x, next_page=next_page, table_name="items", role=role, basket_quantity=basket_quantity)
     
     except Exception as ex:
         ic(ex)
@@ -420,7 +421,7 @@ def get_items_from_basket(basket):
 
         # Create placeholders for SQL query
         placeholders = ', '.join(['%s'] * len(item_pks))
-
+        db, cursor = x.db()
         # Construct the query to fetch item details
         query = f'''
             SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
@@ -432,7 +433,6 @@ def get_items_from_basket(basket):
         '''
 
         # Execute the query with item_pks
-        db, cursor = x.db()
         cursor.execute(query, tuple(item_pks))
         items = cursor.fetchall()
 
@@ -454,6 +454,21 @@ def get_items_from_basket(basket):
 
 
 
+def get_basket_and_quantity(user_pk):
+    basket = redis_client.get(user_pk)
+    
+    # If basket exists and is not None, deserialize from JSON, else set as empty list
+    if basket:
+        basket = json.loads(basket)
+    else:
+        basket = []
+
+    basket_quantity = sum(item['quantity'] for item in basket)
+
+    return basket_quantity
+
+
+
 
 
 @app.get("/customer/view-basket")
@@ -462,8 +477,8 @@ def get_items_from_basket(basket):
 def view_basket(role=None):
     user = session.get("account")
     user_pk = user.get("account_pk")
-
     basket = redis_client.get(user_pk)
+    basket_quantity = get_basket_and_quantity(user_pk)
 
     if basket:
         # Ensure basket is a dictionary
@@ -478,10 +493,10 @@ def view_basket(role=None):
         total_price = sum(item['item_price'] * item['quantity'] for item in items)
         total_price = round(total_price, 2)  # Round to 2 decimal places
 
-        return render_template('view_basket.html', items=items, user=user, total_price=total_price, role=role)
+        return render_template('view_basket.html', items=items, user=user, total_price=total_price, role=role, basket_quantity=basket_quantity)
     
     total_price = 00.00  # Default to 0 if the basket is empty
-    return render_template('view_basket.html', items=[], user=user, total_price=total_price, role=role)
+    return render_template('view_basket.html', items=[], user=user, total_price=total_price, role=role, basket_quantity=basket_quantity)
 
 
 
@@ -658,6 +673,7 @@ def decrease_quantity(item_pk):
 def view_single_restaurant(restaurant_pk, role=None):
     try:
         user = session.get("account")
+        basket_quantity = get_basket_and_quantity(user.get('account_pk'))
 
         db, cursor = x.db()
 
@@ -684,7 +700,7 @@ def view_single_restaurant(restaurant_pk, role=None):
         )
         items = cursor.fetchall()
 
-        return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items, role=role)
+        return render_template("view_single_restaurant.html", user=user, restaurant=restaurant, items=items, role=role, basket_quantity=basket_quantity)
     
     except Exception as ex:
         ic(ex)
@@ -891,7 +907,8 @@ def view_edit_profile():
     user_pk = user.get("account_pk")
     role = redis_client.get(f"user:{user_pk}:role")
     role = role if role else ""
-    return render_template("view_edit_profile.html", user=user, x=x, role=role)
+    basket_quantity = get_basket_and_quantity(user.get('account_pk'))
+    return render_template("view_edit_profile.html", user=user, x=x, role=role, basket_quantity=basket_quantity)
 
 
 
@@ -976,14 +993,10 @@ def get_search_items():
 @app.get("/search")
 @x.require_role('customer')
 @x.no_cache
-def view_search_items():
+def view_search_items(role=None):
     user = session.get("account", "")
+    basket_quantity = get_basket_and_quantity(user.get('account_pk'))
 
-    if not user:
-        return redirect(url_for("view_login"))
-    if not 'customer' in user.get("roles"):
-        return redirect(url_for("view_login"))
-    
     results = get_search_items()
 
     if isinstance(results, str):  # The result is an HTML response
@@ -997,7 +1010,8 @@ def view_search_items():
         restaurants=restaurants,
         search_text=search_text,
         user=user,
-        role=role
+        role=role,
+        basket_quantity=basket_quantity
     )
 
 
