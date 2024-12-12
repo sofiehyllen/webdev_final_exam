@@ -34,4 +34,11 @@
 
 </div>
 
-{% include "_bottom_map.html" %}
+{% extends "_bottom.html" %}
+{% block custom_scripts %}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="{{url_for('static', filename='app.js')}}"></script>
+    <script src="{{url_for('static', filename='mixhtml.js')}}"></script>
+    <script src="{{url_for('static', filename='map.js')}}"></script>
+{% endblock %}
