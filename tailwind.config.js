@@ -4,6 +4,9 @@ module.exports = {
   theme: {
 
     extend: {
+      borderWidth: {
+        1: '1px'
+      },
       colors: {
         blue: {
           50: '#EBF9FF',

@@ -15,6 +15,15 @@
         </div>
 
         <div class="flex flex-col">
+            <label for="restaurant_description" class="text-sm text-gray-600 mb-1">Restaurant description</label>
+            <textarea
+                name="restaurant_description"
+                rows="4"
+                cols="50"
+                mix-check="{{ x.DESCRIPTION_REGEX }}">{{ user.account_description }}</textarea>
+        </div>
+
+        <div class="flex flex-col">
             <label for="user_street" class="text-sm text-gray-600 mb-1">Street</label>
             <input
                 name="user_street"
@@ -47,7 +56,6 @@
             </label>
             <input
                 type="text"
-                id="user_email"
                 name="user_email"
                 value="{{ user.account_email }}"
                 mix-check="{{ x.EMAIL_REGEX }}"/>

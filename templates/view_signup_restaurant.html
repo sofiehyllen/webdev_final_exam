@@ -9,6 +9,16 @@
                 type="text"
                 mix-check="{{ x.NAME_REGEX }}"/>
         </div>
+        
+        <div class="flex flex-col">
+            <label for="restaurant_description" class="text-sm text-gray-600 mb-1">Restaurant description</label>
+            <textarea
+                id="restaurant_description"
+                name="restaurant_description"
+                rows="4"
+                cols="50"
+                mix-check="{{ x.DESCRIPTION_REGEX }}"></textarea>
+        </div>
 
         <div class="flex flex-col">
             <label for="restaurant_street" class="text-sm text-gray-600 mb-1">Street</label>

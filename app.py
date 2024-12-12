@@ -684,6 +684,7 @@ def view_single_restaurant(restaurant_pk, role=None):
             SELECT 
                 restaurant_pk, 
                 restaurant_name, 
+                restaurant_description,
                 restaurant_image_name 
             FROM restaurants 
             WHERE restaurant_pk = %s 
@@ -706,7 +707,6 @@ def view_single_restaurant(restaurant_pk, role=None):
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0 AND item_restaurant_fk = %s
             GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
-            LIMIT 0,6
         '''
 
         items = fetch_items(query, (restaurant_pk,))
@@ -1259,6 +1259,7 @@ def signup():
 def signup_restaurant():
     try:
         restaurant_name = x.validate_account_name("restaurant_name")
+        restaurant_description = x.validate_restaurant_description()
         restaurant_street = x.validate_account_address("restaurant_street")
         restaurant_postalcode = x.validate_account_postalcode("restaurant_postalcode")
         restaurant_city = x.validate_account_address("restaurant_city")
@@ -1301,14 +1302,14 @@ def signup_restaurant():
     
         q = '''
             INSERT INTO restaurants 
-            (restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
+            (restaurant_pk, restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, restaurant_city, 
             restaurant_email, restaurant_password, restaurant_image_name, restaurant_latitude, 
             restaurant_longitude, restaurant_created_at, restaurant_deleted_at, restaurant_blocked_at, 
             restaurant_updated_at, restaurant_verified_at, restaurant_verification_key) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
         cursor.execute(q, (
-            restaurant_pk, restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, 
+            restaurant_pk, restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, restaurant_city, 
             restaurant_email, hashed_password, restaurant_image_name, latitude, longitude, restaurant_created_at, 
             restaurant_deleted_at, restaurant_blocked_at, restaurant_updated_at, restaurant_verified_at, 
             account_verification_key
@@ -1351,12 +1352,13 @@ def login():
 
         # Query the accounts view to check both users and restaurants
         query = """
-            SELECT account_pk, account_name, account_street, 
+            SELECT account_pk, account_name, restaurant_description, account_street, 
             account_postalcode, account_city, account_email,
             account_password, account_verified_at, account_roles,
             user_last_name, account_deleted_at
             FROM accounts
             LEFT JOIN users ON accounts.account_pk = users.user_pk
+            LEFT JOIN restaurants ON accounts.account_pk = restaurants.restaurant_pk
             WHERE account_email = %s
         """
         cursor.execute(query, (account_email,))
@@ -1390,6 +1392,7 @@ def login():
         account = {
             "account_pk": rows[0]["account_pk"],
             "account_name": rows[0]["account_name"],
+            "account_description": rows[0].get("restaurant_description"),
             "account_street": rows[0]["account_street"],
             "account_postalcode": rows[0]["account_postalcode"],
             "account_city": rows[0]["account_city"],
@@ -1795,17 +1798,18 @@ def restaurant_update():
         try:
             restaurant_pk = session.get("account").get("account_pk")
             restaurant_name = x.validate_account_name("user_name")
-            restaurant_street = x.validate_account_email("user_street")
-            restaurant_postalcode = x.validate_account_email("user_postalcode")
-            restaurant_city = x.validate_account_email("user_city")
+            restaurant_description = x.validate_restaurant_description()
+            restaurant_street = x.validate_account_address("user_street")
+            restaurant_postalcode = x.validate_account_postalcode("user_postalcode")
+            restaurant_city = x.validate_account_address("user_city")
             restaurant_email = x.validate_account_email("user_email")
             restaurant_updated_at = int(time.time())
 
             db, cursor = x.db()
 
             cursor.execute(
-                """ SELECT restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_email, 
-                    restaurant_verified_at, restaurant_verification_key 
+                """ SELECT restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, 
+                    restaurant_city, restaurant_email, restaurant_verified_at, restaurant_verification_key 
                     FROM restaurants 
                     WHERE restaurant_pk = %s""", (restaurant_pk,))
             current_user = cursor.fetchone()
@@ -1825,6 +1829,7 @@ def restaurant_update():
                 
             if (
                 current_user["restaurant_name"] == restaurant_name and
+                current_user["restaurant_description"] == restaurant_description and
                 current_user["restaurant_street"] == restaurant_street and
                 current_user["restaurant_postalcode"] == restaurant_postalcode and
                 current_user["restaurant_city"] == restaurant_city and
@@ -1836,11 +1841,12 @@ def restaurant_update():
             restaurant_verified_at = 0 if current_user["restaurant_email"] != restaurant_email else current_user["restaurant_verified_at"]
 
             cursor.execute(
-                """UPDATE restaurants SET restaurant_name = %s, restaurant_street = %s, restaurant_postalcode = %s, 
-                    restaurant_city = %s, restaurant_email = %s, restaurant_updated_at = %s, restaurant_verified_at = %s 
+                """UPDATE restaurants SET restaurant_name = %s, restaurant_description = %s, restaurant_street = %s, 
+                    restaurant_postalcode = %s, restaurant_city = %s, restaurant_email = %s, restaurant_updated_at = %s, 
+                    restaurant_verified_at = %s 
                 WHERE restaurant_pk = %s""",
-                (restaurant_name, restaurant_street, restaurant_postalcode, restaurant_city, restaurant_email, 
-                restaurant_updated_at, restaurant_verified_at, restaurant_pk))
+                (restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, restaurant_city, 
+                restaurant_email, restaurant_updated_at, restaurant_verified_at, restaurant_pk))
             if cursor.rowcount != 1: 
                 x.raise_custom_exception("cannot update user", 401)
 
@@ -1848,7 +1854,8 @@ def restaurant_update():
 
             session["account"].update({
                 "account_name": restaurant_name, 
-                "account_steet": restaurant_street,
+                "account_description": restaurant_description, 
+                "account_street": restaurant_street,
                 "account_postalcode": restaurant_postalcode,
                 "account_city": restaurant_city,
                 "account_email": restaurant_email

@@ -240,6 +240,14 @@ def validate_item_description():
 
 
 ##############################
+def validate_restaurant_description():
+    error = f"description {NAME_MIN} to {DESCRIPTION_MAX} characters"
+    restaurant_description = request.form.get("restaurant_description", "").strip()
+    if not re.match(DESCRIPTION_REGEX, restaurant_description): raise_custom_exception(error, 400)
+    return restaurant_description
+
+
+##############################
 def validate_item_price():
     error = f"price {PRICE_MIN} to {PRICE_MAX}"
     item_price = request.form.get("item_price", "").strip()

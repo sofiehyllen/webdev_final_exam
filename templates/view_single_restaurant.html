@@ -6,18 +6,33 @@
                 <img
                     src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
                     alt="{{ restaurant.restaurant_name }}"
-                    class="w-full h-full object-cover " />
+                    class="w-full h-full object-cover brightness-75" />
             </div>
             <div class="absolute bottom-5 left-5">
-                <h1 class="text-6xl text-white font-bold">{{ restaurant.restaurant_name }}</h1>
+                <div class="flex items-start gap-2 pb-2">
+                    <h1 class="text-6xl text-white font-bold">{{ restaurant.restaurant_name }}</h1>
+                    <p class="px-2 py-0.5 rounded-full bg-blue-700 text-white italic w-fit">W &#43;</p>
+                </div>
+                <div class="pb-6">
+                    <p class="text-white">{{ restaurant.restaurant_description }}</p>
+                </div>
+                <div class=" flex gap-3">
+                    <p class="px-2 py-1 w-fit text-xs text-zinc-800 bg-white rounded-md">Delivery: DKK 39.00</p>
+                    <p class="px-2 py-1 w-fit text-xs text-zinc-800 bg-white rounded-md">Min. order: DKK 75.00</p>
+                </div>
             </div>
         </div>
         <h2 class="text-4xl font-bold pt-10 pb-6">Menu</h2>
         <div class="flex flex-col items-center">
-        <div class="flex flex-wrap justify-center items-center gap-5">
+        <div class="flex flex-wrap  items-center gap-5">
             {% for item in items %}
-                {% include "__item.html"%}
-            {% endfor %}
+            {% if loop.index <= 2 %}
+                {% set show_popular = True %}
+            {% else %}
+                {% set show_popular = False %}
+            {% endif %}
+            {% include "__item.html" %}
+        {% endfor %}
         </div>
     </div>
 </main>

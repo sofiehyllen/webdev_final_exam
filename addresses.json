@@ -1,0 +1,226 @@
+[
+  {
+      "street": "Amagerbrogade 1",
+      "postalcode": "2300",
+      "city": "København",
+      "latitude": 55.663001,
+      "longitude": 12.594365
+  },
+  {
+      "street": "Nørrebrogade 2",
+      "postalcode": "2200",
+      "city": "København",
+      "latitude": 55.686775,
+      "longitude": 12.545967
+  },
+  {
+      "street": "Vesterbrogade 3",
+      "postalcode": "1620",
+      "city": "København",
+      "latitude": 55.673179,
+      "longitude": 12.550954
+  },
+  {
+      "street": "Østerbrogade 4",
+      "postalcode": "2100",
+      "city": "København",
+      "latitude": 55.703182,
+      "longitude": 12.574235
+  },
+  {
+      "street": "H.C. Andersens Boulevard 5",
+      "postalcode": "1553",
+      "city": "København",
+      "latitude": 55.673179,
+      "longitude": 12.550954
+  },
+  {
+      "street": "Frederiksberg Allé 6",
+      "postalcode": "1820",
+      "city": "København",
+      "latitude": 55.674567,
+      "longitude": 12.543111
+  },
+  {
+      "street": "Rådhuspladsen 7",
+      "postalcode": "1550",
+      "city": "København",
+      "latitude": 55.673697,
+      "longitude": 12.566278
+  },
+  {
+      "street": "Købmagergade 8",
+      "postalcode": "1150",
+      "city": "København",
+      "latitude": 55.675582,
+      "longitude": 12.570148
+  },
+  {
+      "street": "Nykøbinggade 9",
+      "postalcode": "2200",
+      "city": "København",
+      "latitude": 55.687457,
+      "longitude": 12.549858
+  },
+  {
+      "street": "Vesterbrogade 10",
+      "postalcode": "1620",
+      "city": "København",
+      "latitude": 55.671991,
+      "longitude": 12.553149
+  },
+  {
+      "street": "Jagtvej 11",
+      "postalcode": "2200",
+      "city": "København",
+      "latitude": 55.695215,
+      "longitude": 12.544508
+  },
+  {
+      "street": "Søndre Fasanvej 12",
+      "postalcode": "2000",
+      "city": "København",
+      "latitude": 55.666899,
+      "longitude": 12.540251
+  },
+  {
+      "street": "Strandgade 13",
+      "postalcode": "1401",
+      "city": "København",
+      "latitude": 55.673040,
+      "longitude": 12.594639
+  },
+  {
+      "street": "Togetvej 14",
+      "postalcode": "1670",
+      "city": "København",
+      "latitude": 55.664322,
+      "longitude": 12.581249
+  },
+  {
+      "street": "Vesterbrogade 15",
+      "postalcode": "1620",
+      "city": "København",
+      "latitude": 55.673178,
+      "longitude": 12.551889
+  },
+  {
+      "street": "Blegdamsvej 16",
+      "postalcode": "2200",
+      "city": "København",
+      "latitude": 55.692328,
+      "longitude": 12.556920
+  },
+  {
+      "street": "Højbro Plads 17",
+      "postalcode": "1200",
+      "city": "København",
+      "latitude": 55.679441,
+      "longitude": 12.580062
+  },
+  {
+      "street": "Amagerbrogade 18",
+      "postalcode": "2300",
+      "city": "København",
+      "latitude": 55.664999,
+      "longitude": 12.595632
+  },
+  {
+      "street": "Kastrupvej 19",
+      "postalcode": "2300",
+      "city": "København",
+      "latitude": 55.637364,
+      "longitude": 12.577818
+  },
+  {
+      "street": "Valby Langgade 20",
+      "postalcode": "2500",
+      "city": "København",
+      "latitude": 55.666240,
+      "longitude": 12.496634
+  },
+  {
+      "street": "Søndre Boulevard 21",
+      "postalcode": "2000",
+      "city": "København",
+      "latitude": 55.670282,
+      "longitude": 12.528677
+  },
+  {
+      "street": "Amager Strandvej 22",
+      "postalcode": "2300",
+      "city": "København",
+      "latitude": 55.656915,
+      "longitude": 12.623561
+  },
+  {
+      "street": "Turesensgade 23",
+      "postalcode": "1453",
+      "city": "København",
+      "latitude": 55.673858,
+      "longitude": 12.578702
+  },
+  {
+      "street": "Vesterbrogade 24",
+      "postalcode": "1606",
+      "city": "København",
+      "latitude": 55.673203,
+      "longitude": 12.552636
+  },
+  {
+      "street": "Linnesgade 25",
+      "postalcode": "1369",
+      "city": "København",
+      "latitude": 55.672815,
+      "longitude": 12.567016
+  },
+  {
+      "street": "Tingvej 26",
+      "postalcode": "1750",
+      "city": "København",
+      "latitude": 55.658464,
+      "longitude": 12.520462
+  },
+  {
+      "street": "Sankt Annæ Gade 27",
+      "postalcode": "1416",
+      "city": "København",
+      "latitude": 55.669792,
+      "longitude": 12.593724
+  },
+  {
+      "street": "Nørrebrogade 28",
+      "postalcode": "2200",
+      "city": "København",
+      "latitude": 55.684349,
+      "longitude": 12.548859
+  },
+  {
+      "street": "Glamsbjerggade 29",
+      "postalcode": "2100",
+      "city": "København",
+      "latitude": 55.722335,
+      "longitude": 12.565502
+  },
+  {
+      "street": "Vesterbrogade 30",
+      "postalcode": "1620",
+      "city": "København",
+      "latitude": 55.672295,
+      "longitude": 12.551766
+  },
+  {
+      "street": "Borggade 31",
+      "postalcode": "2150",
+      "city": "København",
+      "latitude": 55.694253,
+      "longitude": 12.577448
+  },
+  {
+      "street": "Sankt Peders Stræde 32",
+      "postalcode": "1453",
+      "city": "København",
+      "latitude": 55.677132,
+      "longitude": 12.571952
+  }
+]
