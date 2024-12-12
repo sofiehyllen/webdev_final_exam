@@ -321,7 +321,8 @@ def view_all_restaurants(role=None):
 @x.no_cache
 def view_order_confirmation(role=None):
     user = session.get("account")
-    return render_template("view_order_confirmation.html", user=user, role=role)
+    basket_quantity = get_basket_and_quantity(user.get('account_pk'))
+    return render_template("view_order_confirmation.html", user=user, role=role, basket_quantity=basket_quantity)
 
 
 
@@ -1677,7 +1678,6 @@ def send_order_email():
 
         # Empty the basket after the email is sent (from Redis and session)
         redis_client.delete(user_pk)  # Remove the basket from Redis
-        session.pop('basket', None)  # Clear the basket from the session if stored there
 
         return """<template mix-redirect="/order-confirmation"></template>""", 201
     
