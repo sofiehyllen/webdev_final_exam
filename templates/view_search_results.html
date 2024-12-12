@@ -27,21 +27,7 @@
     <p class="text-left py-5 text-2xl font-extrabold">Items</p>
         <div class="flex flex-wrap justify-start items-center gap-5">
             {% for item in items %}
-            <article class="flex p-3 shadow-md rounded-lg h-30 w-1/3 justify-between">
-                <div class="w-2/3 flex flex-col justify-between">
-                    <div>
-                        <p class="font-semibold m-0">{{ item.item_title }}</p>
-                        <p class="text-gray-600 text-sm font-light m-0">{{ item.item_description }}</p>
-                    </div>
-                    <p class="text-blue-500 text-sm font-light m-0">DKK {{ item.item_price }}</p>
-                </div>
-                <div class="w-1/3 h-20 overflow-hidden flex justify-center items-center rounded-lg">
-                    <img
-                        src="{{ url_for('static', filename='item_images/' + item.item_image_names[0]) }}"
-                        alt="{{ item.item_title }}"
-                        class="h-full w-full object-cover" />
-                </div>
-            </article>
+            {% include "__item.html"%}
             {% endfor %}
         </div>
     {% endif %}

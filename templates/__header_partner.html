@@ -1,27 +1,34 @@
-<div class="flex w-full py-5 justify-between border-b border-gray-100">
-  <div class="pl-20">
-    <a class="text-3xl font-semibold" href="/{{ role if role else user.roles[0] }}">Wolt</a>
-
+<div class="flex w-full py-5 justify-between border-b border-zinc-200">
+  <div class="w-1/3 flex gap-3 justify-start items-center pl-20">
+    <a class="text-3xl font-semibold" href="/{{  role if role else user.roles[0] }}">Wolt</a>
+    <div class="p-2 ml-3 bg-blue-100 rounded-full">
+      <svg class="size-7 fill-blue-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+        <path d="M312 32c-13.3 0-24 10.7-24 24s10.7 24 24 24l25.7 0 34.6 64-149.4 0-27.4-38C191 99.7 183.7 96 176 96l-56 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l43.7 0 22.1 30.7-26.6 53.1c-10-2.5-20.5-3.8-31.2-3.8C57.3 224 0 281.3 0 352s57.3 128 128 128c65.3 0 119.1-48.9 127-112l49 0c8.5 0 16.3-4.5 20.7-11.8l84.8-143.5 21.7 40.1C402.4 276.3 384 312 384 352c0 70.7 57.3 128 128 128s128-57.3 128-128s-57.3-128-128-128c-13.5 0-26.5 2.1-38.7 6L375.4 48.8C369.8 38.4 359 32 347.2 32L312 32zM458.6 303.7l32.3 59.7c6.3 11.7 20.9 16 32.5 9.7s16-20.9 9.7-32.5l-32.3-59.7c3.6-.6 7.4-.9 11.2-.9c39.8 0 72 32.2 72 72s-32.2 72-72 72s-72-32.2-72-72c0-18.6 7-35.5 18.6-48.3zM133.2 368l65 0c-7.3 32.1-36 56-70.2 56c-39.8 0-72-32.2-72-72s32.2-72 72-72c1.7 0 3.4 .1 5.1 .2l-24.2 48.5c-9 18.1 4.1 39.4 24.3 39.4zm33.7-48l50.7-101.3 72.9 101.2-.1 .1-123.5 0zm90.6-128l108.5 0L317 274.8 257.4 192z"/>
+      </svg>    
+    </div>
+    <a href="{{ url_for('view_edit_profile') }}" class="text-sm text-blue-700 hover:text-blue-800 transition-colors transform">
+      <span class="font-semibold">Partner</span> {{user.account_name}} {{user.account_last_name}}</a>
   </div>
+
   <div class="flex gap-3 w-1/3 justify-end pr-20">
     {% if user and user.roles|length > 1 %}
-    <a class="btn-secondary rounded-lg pt-2.5 mr-5" href="{{ url_for('view_choose_role')}}">Change role</a>
+    <a class="btn-secondary rounded-lg pt-3 mr-5" href="{{ url_for('view_choose_role')}}">Change role</a>
     {% endif %}
     <div class="relative dropdown-container">
-        <button class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-300 bg-gray-200 w-20" id="dropdown-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <button class="flex items-center gap-2 p-0.5 rounded-full hover:bg-zinc-300 bg-zinc-200 w-20" id="dropdown-btn">
+            <span class="size-9 rounded-full flex justify-center items-center bg-[#CFFFCC] border-2 border-white">
+              <p class="uppercase text-sm text-zinc-500">{{ user.account_name[0] }}{{ user.account_last_name[0] }}</p>
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
         </button>
   
-        <div id="dropdown-menu" class="absolute right-0 hidden mt-1 bg-white rounded-md shadow-lg w-48 z-50">
-            <form method="POST" action="{{url_for('logout')}}" class="">
-                <button class="w-full text-left hover:bg-gray-200 p-2 rounded-md">Logout</button>
+        <div id="dropdown-menu" class="absolute right-0 hidden mt-2 bg-white rounded-md shadow-lg w-48 z-50">
+          <div class="p-2"><a href="{{ url_for('view_edit_profile') }}" class="p-2 w-full text-left hover:bg-zinc-100 rounded-md block">Edit profile</a></div>
+            <form method="POST" action="{{url_for('logout')}}" class="border-zinc-200 border-t-1">
+                <div class="p-2"><button class="w-full text-left hover:bg-zinc-100 p-2 rounded-md">Logout</button></div>
             </form>
-            <a href="{{ url_for('view_edit_profile') }}" class="w-full text-left hover:bg-gray-200 p-2 rounded-md block">Edit profile</a>
         </div>
     </div>
   </div>
