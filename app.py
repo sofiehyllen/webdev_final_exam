@@ -339,14 +339,16 @@ def fetch_items(query, params=None):
 
     except Exception as ex:
         ic(ex)
-        if "db" in locals():
-            db.rollback()
-        return []
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            return ic(ex.message)
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            return "<template>Database error</template>", 500        
+        return "<template>System under maintenance</template>", 500  
     finally:
-        if "cursor" in locals():
-            cursor.close()
-        if "db" in locals():
-            db.close()
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 
 @app.get("/customer/items")
@@ -827,16 +829,20 @@ def view_my_items():
 
 def get_items_for_restaurant(restaurant_pk):
     try:
-        db, cursor = x.db()
-        q = '''
-            SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-            ii.item_image_name
+        query = '''
+            SELECT 
+                i.item_pk, 
+                i.item_title, 
+                i.item_description, 
+                i.item_price, 
+                GROUP_CONCAT(ii.item_image_name) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
-            WHERE i.item_deleted_at = 0 AND i.item_restaurant_fk = %s
+            WHERE i.item_deleted_at = 0 AND item_restaurant_fk = %s
+            GROUP BY i.item_pk, i.item_title, i.item_description, i.item_price
         '''
-        cursor.execute(q, (restaurant_pk,))
-        items = cursor.fetchall()
+
+        items = fetch_items(query, (restaurant_pk,))
 
         return items
     
@@ -913,10 +919,12 @@ def get_item_for_edit(item_pk):
 ##############################
 @app.get("/edit-profile")
 def view_edit_profile():
-    if not session.get("account", ""): 
-        return redirect(url_for("view_login"))
     user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
     user_pk = user.get("account_pk")
+    if 'customer' not in user.get("roles") and 'partner' not in user.get("roles"):
+        return redirect(url_for('view_login'))
     role = redis_client.get(f"user:{user_pk}:role")
     role = role if role else ""
     basket_quantity = get_basket_and_quantity(user.get('account_pk'))
@@ -1676,8 +1684,8 @@ def send_order_email():
         order = x.format_order_details(order)
         x.send_order_confirmation_email(to_email, order, total_price)
 
-        # Empty the basket after the email is sent (from Redis and session)
-        redis_client.delete(user_pk)  # Remove the basket from Redis
+        # Empty the basket after the email is sent 
+        redis_client.delete(user_pk)
 
         return """<template mix-redirect="/order-confirmation"></template>""", 201
     

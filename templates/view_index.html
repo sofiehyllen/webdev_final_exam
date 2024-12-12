@@ -1,13 +1,17 @@
 {% include "_top.html" %}
 
-<main class="w-full flex">
-    <div id="items" class="w-full h-screen text-center pt-32">
-        <h1 class="text-3xl font-semibold">Welcome</h1>
-        <div class="pt-12">
-            <a href="{{url_for('view_login')}}" class="btn-primary mr-6">Login</a>
-            <a href="{{url_for('view_signup')}}" class="btn-primary">Sign up</a>
-        </div>
+<main class="w-full h-full flex px-20">
+    <div id="map" class="w-full h-screen rounded-xl"></div>
+    <div class="w-full h-full">
+        
     </div>
 </main>
 
-{% include "_bottom.html" %}
+{% extends "_bottom.html" %}
+{% block custom_scripts %}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="{{url_for('static', filename='app.js')}}"></script>
+    <script src="{{url_for('static', filename='mixhtml.js')}}"></script>
+    <script src="{{url_for('static', filename='map.js')}}"></script>
+{% endblock %}
