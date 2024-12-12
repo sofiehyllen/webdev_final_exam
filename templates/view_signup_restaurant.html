@@ -1,89 +1,91 @@
 {% include "_top.html" %}
 
-<main class="w-full h-screen flex items-center">
-    <form id="frm_restaurant_signup" class="w-full max-w-sm flex flex-col gap-6 mx-auto p-8 shadow-lg rounded-md">
-        <div class="flex flex-col">
-            <label for="restaurant_name" class="text-sm text-gray-600 mb-1">Restaurant name</label>
-            <input
-                name="restaurant_name"
-                type="text"
-                mix-check="{{ x.NAME_REGEX }}"/>
-        </div>
-        
-        <div class="flex flex-col">
-            <label for="restaurant_description" class="text-sm text-gray-600 mb-1">Restaurant description</label>
-            <textarea
-                id="restaurant_description"
-                name="restaurant_description"
-                rows="4"
-                cols="50"
-                mix-check="{{ x.DESCRIPTION_REGEX }}"></textarea>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_street" class="text-sm text-gray-600 mb-1">Street</label>
-            <input
-                name="restaurant_street"
-                type="text"
-                mix-check="{{ x.ADDRESS_REGEX }}"/>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_postalcode" class="text-sm text-gray-600 mb-1">Postalcode</label>
-            <input
-                name="restaurant_postalcode"
-                type="text"
-                mix-check="{{ x.POSTALCODE_REGEX }}"/>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_city" class="text-sm text-gray-600 mb-1">City</label>
-            <input
-                name="restaurant_city"
-                type="text"
-                mix-check="{{ x.ADDRESS_REGEX }}"/>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_email" class="text-sm text-gray-600 mb-1">Email</label>
-            <input
-                name="restaurant_email"
-                type="text"
-                mix-check="{{ x.EMAIL_REGEX }}"/>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_password" class="flex items-center text-sm text-gray-600 mb-1">
-                <span>Password</span>
-                <span class="ml-auto text-gray-400 text-xs">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
-            </label>
-            <input
-                name="restaurant_password"
-                type="text"
-                mix-check="{{ x.PASSWORD_REGEX }}"/>
-        </div>
-
-        <div class="flex flex-col">
-            <label for="restaurant_image_name" class="text-sm text-gray-600 mb-1">Logo</label>
+<main class="w-full h-full px-20">
+    <h1 class="text-5xl font-extrabold mb-4">Sign up</h1>
+    <h2 class="text-3xl font-semibold mb-10">Register your restaurant and become a part of the Wolt family</h2>
+    <form id="frm_restaurant_signup" class="mx-auto border-1 border-zinc-100 w-full flex max-w-4xl divide-x-2 divide-zinc-100 p-10 shadow-lg rounded-md">
+        <div class="flex flex-col w-1/2 gap-6 pr-10">
+            <div class="flex flex-col w-full">
+                <label for="restaurant_name" class="text-sm text-gray-600 mb-1">Restaurant name</label>
                 <input
-                    type="file"
-                    name="restaurant_image_name"
-                    id="restaurant_image_name"
-                    accept=".png, .jpg, .jpeg, .gif"
-                    mix-check="{{ x.ALLOWED_FILE_REGEX }}"
-                    class="border-none "/>
+                    name="restaurant_name"
+                    type="text"
+                    mix-check="{{ x.NAME_REGEX }}"/>
+            </div>
+            
+            <div class="flex flex-col w-full">
+                <label for="restaurant_description" class="text-sm text-gray-600 mb-1">Restaurant description</label>
+                <textarea
+                    id="restaurant_description"
+                    name="restaurant_description"
+                    rows="4"
+                    cols="50"
+                    mix-check="{{ x.DESCRIPTION_REGEX }}"></textarea>
+            </div>
+    
+            <div class="flex flex-col w-full">
+                <label for="restaurant_street" class="text-sm text-gray-600 mb-1">Street</label>
+                <input
+                    name="restaurant_street"
+                    type="text"
+                    mix-check="{{ x.ADDRESS_REGEX }}"/>
+            </div>
+    
+            <div class="flex gap-3 w-full">
+                <div class="flex flex-col w-2/3">
+                    <label for="restaurant_city" class="text-sm text-gray-600 mb-1">City</label>
+                    <input
+                        name="restaurant_city"
+                        type="text"
+                        mix-check="{{ x.ADDRESS_REGEX }}"/>
+                </div>
+                <div class="flex flex-col w-1/3">
+                    <label for="restaurant_postalcode" class="text-sm text-gray-600 mb-1">Postalcode</label>
+                    <input
+                        name="restaurant_postalcode"
+                        type="text"
+                        mix-check="{{ x.POSTALCODE_REGEX }}"/>
+                </div>
+            </div>
         </div>
-
-        <button
-            mix-post="/restaurants"
-            mix-data="#frm_restaurant_signup"
-            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
-            Signup
-        </button>
-
-        <a href="{{ url_for('view_login') }}" class="text-center text-blue-500 hover:text-blue-600 transition duration-200">
-            Login
-        </a>
+        <div class="flex flex-col w-1/2 gap-6 pl-10">
+            <div class="flex flex-col w-full">
+                <label for="restaurant_email" class="text-sm text-gray-600 mb-1">Email</label>
+                <input
+                    name="restaurant_email"
+                    type="text"
+                    mix-check="{{ x.EMAIL_REGEX }}"/>
+            </div>
+    
+            <div class="flex flex-col w-full">
+                <label for="restaurant_password" class="flex items-center text-sm text-gray-600 mb-1">
+                    <span>Password</span>
+                    <span class="ml-auto text-gray-400 text-xs">{{ x.PASSWORD_MIN }} to {{ x.PASSWORD_MAX }} chars</span>
+                </label>
+                <input
+                    name="restaurant_password"
+                    type="text"
+                    mix-check="{{ x.PASSWORD_REGEX }}"/>
+            </div>
+    
+            <div class="flex flex-col w-full">
+                <label for="restaurant_image_name" class="text-sm text-gray-600 mb-1">Logo</label>
+                    <input
+                        type="file"
+                        name="restaurant_image_name"
+                        id="restaurant_image_name"
+                        accept=".png, .jpg, .jpeg, .gif"
+                        mix-check="{{ x.ALLOWED_FILE_REGEX }}"
+                        class="border-none "/>
+            </div>
+    
+            <button
+                mix-post="/restaurants"
+                mix-data="#frm_restaurant_signup"
+                class="bg-blue-500 text-white font-medium w-full py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+                Signup
+            </button>
+        </div>
     </form>
 </main>
 

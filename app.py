@@ -45,7 +45,14 @@ def _________GET_________(): pass
 ##############################
 @app.get("/")
 def view_index():    
-    return render_template("view_index.html")
+    view = request.args.get("view", "login") 
+    if view == "login":
+        content_template = "view_login.html"
+    elif view == "signup":
+        content_template = "view_signup.html"
+    else:
+        content_template = "view_login.html" 
+    return render_template("view_index.html", x=x,  message=request.args.get("message", ""), content_template=content_template)
 
 
 
@@ -71,7 +78,7 @@ def view_signup():
 
 
 ##############################
-@app.get("/signup_restaurant")
+@app.get("/signup-restaurant")
 @x.no_cache
 def view_signup_restaurant():  
     user = session.get("account")
@@ -107,10 +114,10 @@ def view_login():
         if "restaurant" in roles:
             return redirect(url_for("view_restaurant"))       
         if len(roles) > 1:
-            return redirect(url_for("view_choose_role"))          
+            return redirect(url_for("view_choose_role"))  
     return render_template("view_login.html", x=x, title="Login", message=request.args.get("message", ""))
 
-
+    
 
 ##############################
 @app.get("/forgot-password")
@@ -1171,7 +1178,7 @@ def set_role(role):
 @app.post("/logout")
 def logout():
     session.pop("account", None)
-    return redirect(url_for("view_login"))
+    return redirect(url_for("view_index"))
 
 
 ##############################

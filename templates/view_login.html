@@ -1,11 +1,8 @@
-{% include "_top.html" %}
-
-<main class="w-full h-screen flex items-center">
-    <form id="frm_user_login" class="w-full max-w-sm flex flex-col gap-6 mx-auto p-8 shadow-lg rounded-md">
-        <div class="text-green-500">{{ message }}</div>
+    <form id="frm_user_login" class="border-1 border-zinc-100 w-full max-w-sm flex flex-col gap-6 mx-auto p-8 shadow-lg rounded-md">
         <div>
-            <h1 class="text-xl font-bold pb-3">Create an account or log in</h1>
-            <p class="text-sm font-light text-gray-700">Log in below or create a new Wolt account.</p>
+            <div class="text-green-500">{{ message }}</div>
+            <h1 class="text-3xl font-bold pb-3">Log in</h1>
+            <p class=" font-light text-gray-700">Log in below or create a new Wolt account.</p>
         </div>
         <div class="flex flex-col">
             <label for="user_email" class="text-sm text-gray-600 mb-1">
@@ -31,17 +28,11 @@
         <button
             mix-post="/login"
             mix-data="#frm_user_login"
-            class="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
+            class="btn-primary rounded-md">
             Login
         </button>
 
-        <a href="{{ url_for('view_forgot_password') }}" class="text-center text-blue-500 hover:text-blue-600 transition duration-200">
+        <a href="{{ url_for('view_forgot_password') }}" class="text-center font-light text-blue-600 border-b-1 border-transparent w-fit mx-auto hover:border-blue-600 transition-colors transform">
             Forgot password?
         </a>
-        <a href="{{ url_for('view_signup') }}" class="text-center text-blue-500 hover:text-blue-600 transition duration-200">
-            Signup
-        </a>
     </form>
-</main>
-
-{% include "_bottom.html" %}
