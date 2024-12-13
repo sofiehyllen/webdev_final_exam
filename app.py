@@ -1058,6 +1058,9 @@ def get_search_items():
             SELECT 
             restaurants.restaurant_pk, 
             restaurants.restaurant_name, 
+            restaurants.restaurant_street, 
+            restaurants.restaurant_city, 
+            restaurants.restaurant_postalcode, 
             restaurants.restaurant_image_name
             FROM restaurants
             WHERE restaurants.restaurant_deleted_at = 0 AND

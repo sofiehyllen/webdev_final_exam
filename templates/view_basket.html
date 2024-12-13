@@ -1,7 +1,7 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full">
-  <h1 class="text-2xl font-bold mb-4">Your Basket</h1>
+<main class="w-full px-20">
+  <h1 class="text-4xl font-bold mb-4">Your Basket</h1>
   <div>
     {% if items %}
     <ul class="border-b">
@@ -56,7 +56,8 @@
     </div>
     {% else %}
       <p class="text-center text-gray-500 mt-6">Your basket is currently empty. Add some items to get started!</p>
-    {% endif %}
+    
+      {% endif %}
   </div>
 </main>
 

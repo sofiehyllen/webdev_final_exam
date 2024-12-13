@@ -1,8 +1,8 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full">
+<main class="w-full px-20">
         <div class="relative">
-            <div class="w-full h-80 overflow-hidden flex justify-center items-center rounded-2xl mt-10">
+            <div class="w-full h-80 overflow-hidden flex justify-center items-center rounded-2xl">
                 <img
                     src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
                     alt="{{ restaurant.restaurant_name }}"
@@ -11,7 +11,7 @@
             <div class="absolute bottom-5 left-5">
                 <div class="flex items-start gap-2 pb-2">
                     <h1 class="text-6xl text-white font-bold">{{ restaurant.restaurant_name }}</h1>
-                    <p class="px-2 py-0.5 rounded-full bg-blue-700 text-white italic w-fit">W &#43;</p>
+                    <p class="px-2.5 py-1 pt-1.5 rounded-full bg-blue-700 text-white italic w-fit font-baloo font-bold leading-none">W &#43;</p>
                 </div>
                 <div class="pb-6">
                     <p class="text-white">{{ restaurant.restaurant_description }}</p>

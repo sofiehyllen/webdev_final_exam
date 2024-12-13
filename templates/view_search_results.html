@@ -1,24 +1,12 @@
 {% include "_top_logged.html" %}
 
-
+<main class="w-full px-20">
     <p class="text-left py-5 text-4xl font-extrabold">Search results for: <span class="capitalize">"{{ search_text }}"</span></p>
     {% if restaurants %}
     <p class="text-left py-5 text-2xl font-extrabold">Restaurants</p>
         <div class="flex flex-wrap justify-start items-center gap-5 mb-5">
             {% for restaurant in restaurants %}
-            <a href="/customer/restaurant/{{ restaurant.restaurant_pk }}" class="block h-30 w-1/3 min-w-60 ">
-                <article class="flex p-3 shadow-md rounded-lg h-full w-full justify-between">
-                    <div class="w-2/3 flex flex-col justify-between">
-                        <p class="font-semibold m-0">{{ restaurant.restaurant_name }}</p>
-                    </div>
-                    <div class="w-1/3 h-20 overflow-hidden flex justify-center items-center rounded-lg">
-                        <img
-                            src="{{ url_for('static', filename='restaurant_images/' + restaurant.restaurant_image_name) }}"
-                            alt="{{ restaurant.restaurant_name }}"
-                            class="w-full h-full object-cover" />
-                    </div>
-                </article>
-            </a>
+            {% include "__restaurant.html"%}
             {% endfor %}
         </div>
     {% endif %}
@@ -37,6 +25,6 @@
     {% if not items and not restaurants %}
         <p>No results found for "{{ search_text }}"</p>
     {% endif %}
-
+</main>
 
 {% include "_bottom.html" %}

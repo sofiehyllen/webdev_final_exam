@@ -1,8 +1,8 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full pt-10">
-    <h1 class="text-4xl font-semibold mb-4">All Items</h1> 
-    <h2 class="text-xl font-semibold mb-3">Customers & Partners</h2>
+<main class="w-full px-20">
+    <h1 class="text-4xl font-semibold mb-2">All items</h1> 
+    <h2 class="text-xl font-semibold mb-10">All menu items registered by each restaurant</h2>
     <table class="w-full table-auto border-collapse mb-6">
         <thead>
             <tr class="text-left border-b">
@@ -14,7 +14,7 @@
         </thead>
         <tbody>
     {% for item in items %} 
-    <tr class="border-b">
+    <tr id="items" class="border-b">
             <td class="py-2 px-4">{{ item.restaurant_name }}</td>
             <td class="py-2 px-4">{{ item.item_title }}</td>
             <td id="block-unblock-item-btn-{{ item.item_pk }}" class="py-2 px-4">
