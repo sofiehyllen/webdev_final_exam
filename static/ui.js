@@ -5,8 +5,16 @@ dropdowns.forEach(dropdown => {
     const menu = dropdown.querySelector('div');
     
     // Show the dropdown menu when the button is clicked
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+        event.stopPropagation(); // Prevent click event from propagating to the window
         menu.classList.toggle('hidden');
+    });
+
+    // Close the dropdown when clicking outside
+    window.addEventListener('click', (event) => {
+        if (!menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+        }
     });
 });
 

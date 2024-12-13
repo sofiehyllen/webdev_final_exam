@@ -1,0 +1,64 @@
+{% include "_top_logged.html" %}
+
+<main class="w-full px-20">
+  <h1 class="text-4xl font-semibold mb-2">Restaurants</h1> 
+  <h2 class="text-2xl font-semibold mb-10">All registered restaurant accounts</h2>
+    <table class="w-full table-auto border-collapse">
+        <thead>
+            <tr class="text-left border-b">
+                <th class="py-2 px-4">Name</th>
+                <th class="py-2 px-4">Email</th>
+                <th class="py-2 px-4">Address</th>
+                <th class="py-2 px-4">Block user</th>
+                <th class="py-2 px-4">Delete user</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for restaurant in restaurants %} 
+        <tr class="border-b">
+            <td class="py-2 px-4">{{ restaurant.restaurant_name }}</td>
+            <td class="py-2 px-4">{{ restaurant.restaurant_email }}</td>
+            <td class="py-2 px-4">{{ restaurant.restaurant_street }}, {{ restaurant.restaurant_postalcode }} {{ restaurant.restaurant_city }}</td>
+            <td id="block-unblock-restaurant-btn-{{ restaurant.restaurant_pk }}" class="py-2 px-4">
+                {% if not restaurant.restaurant_blocked_at %}
+                <form id="block-restaurant-{{ restaurant.restaurant_pk }}">
+                    <button
+                        class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                        mix-put="/block/restaurant/{{ restaurant.restaurant_pk }}"
+                        mix-data="#block-restaurant-{{ restaurant.restaurant_pk }}"
+                        mix-target="#block-restaurant-{{ restaurant.restaurant_pk }}">
+                        Block
+                    </button>
+                </form>
+                {% else %}
+                <form id="unblock-restaurant-{{ restaurant.restaurant_pk }}">
+                    <button
+                        class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
+                        mix-put="/unblock/restaurant/{{ restaurant.restaurant_pk }}"
+                        mix-data="#unblock-restaurant-{{ restaurant.restaurant_pk }}"
+                        mix-target="#unblock-restaurant-{{ restaurant.restaurant_pk }}">
+                        Unblock
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+            <td id="delete-restaurant-{{ restaurant.restaurant_pk }}">
+                {% if restaurant.restaurant_deleted_at == 0 %}
+                <button
+                    class=""
+                    title="Delete User"
+                    mix-delete="/admin/delete/restaurant/{{ restaurant.restaurant_pk }}"
+                    mix-target="#delete-restaurant-{{ restaurant.restaurant_pk }}">
+                    🗑️
+                </button>
+                {% else %}
+                <div class="flex items-center">{{ restaurant.restaurant_deleted_at | format_epoch }}</div>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+</main>
+
+{% include "_bottom.html" %}

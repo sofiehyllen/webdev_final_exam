@@ -3,6 +3,7 @@ from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
+from datetime import datetime
 from x import redis_client
 import decimal
 import x
@@ -736,7 +737,11 @@ def view_single_restaurant(restaurant_pk, role=None):
 
 
 
-
+@app.template_filter("format_epoch")
+def format_epoch(value):
+    if value:
+        return datetime.fromtimestamp(value).strftime("%d. %b. %Y, %H:%M")
+    return "N/A"
 
 
 
@@ -750,11 +755,72 @@ def view_all_users():
             return redirect(url_for("view_login"))
         
         db, cursor = x.db()
-        q = 'SELECT account_pk, account_name, account_email, account_blocked_at, account_deleted_at, account_roles FROM accounts'
-        cursor.execute(q)
+        q_user = """
+            SELECT 
+                u.user_pk, 
+                u.user_name, 
+                u.user_last_name, 
+                u.user_email, 
+                u.user_street, 
+                u.user_postalcode, 
+                u.user_city, 
+                u.user_blocked_at, 
+                u.user_deleted_at,
+                GROUP_CONCAT(r.role_name) AS roles
+            FROM 
+                users u
+            LEFT JOIN 
+                users_roles ur ON u.user_pk = ur.user_role_user_fk
+            LEFT JOIN 
+                roles r ON ur.user_role_role_fk = r.role_pk
+            GROUP BY 
+                u.user_pk
+            LIMIT 0, 10;"""
+        cursor.execute(q_user)
         accounts = cursor.fetchall()
 
         return render_template('view_all_users.html', user=user, accounts=accounts)
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        return "<template>System under maintenance</template>", 500
+    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
+
+
+
+##############################
+@app.get("/admin/restaurants")
+@x.no_cache
+def view_all_restaurants_admin():
+    try:
+        user = session.get("account")
+        if not 'admin' in user.get("roles"):
+            return redirect(url_for("view_login"))
+        
+        db, cursor = x.db()
+
+        q_restaurant = """
+            SELECT 
+                restaurant_pk, 
+                restaurant_name, 
+                restaurant_email, 
+                restaurant_street, 
+                restaurant_postalcode, 
+                restaurant_city, 
+                restaurant_blocked_at, 
+                restaurant_deleted_at
+            FROM restaurants
+            LIMIT 0,10"""
+        cursor.execute(q_restaurant)
+        restaurants = cursor.fetchall()
+
+
+
+        return render_template('view_all_restaurants_admin.html', user=user, restaurants=restaurants)
 
     except Exception as ex:
         ic(ex)
@@ -836,6 +902,7 @@ def view_my_items():
 
 def get_items_for_restaurant(restaurant_pk):
     try:
+        db, cursor = x.db()
         query = '''
             SELECT 
                 i.item_pk, 

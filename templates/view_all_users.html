@@ -1,121 +1,68 @@
 {% include "_top_logged.html" %}
 
-<main class="w-full pt-10">
-    <h1 class="text-4xl font-semibold mb-4">All Accounts</h1> 
-    <h2 class="text-xl font-semibold mb-3">Customers & Partners</h2>
+<main class="w-full px-20">
+    <h1 class="text-4xl font-semibold mb-2">Users</h1> 
+    <h2 class="text-2xl font-semibold mb-10">All registered customers and partners</h2>
     <table class="w-full table-auto border-collapse mb-6">
         <thead>
             <tr class="text-left border-b">
                 <th class="py-2 px-4">Name</th>
                 <th class="py-2 px-4">Email</th>
+                <th class="py-2 px-4">Address</th>
+                <th class="py-2 px-4">Role(s)</th>
                 <th class="py-2 px-4">Block user</th>
                 <th class="py-2 px-4">Delete user</th>
             </tr>
         </thead>
         <tbody>
-{% for account in accounts %} 
-    {% if account.account_roles in ['customer', 'partner'] %}
+    {% for account in accounts %} 
         <tr class="border-b">
-            <td class="py-2 px-4">{{ account.account_name }}</td>
-            <td class="py-2 px-4">{{ account.account_email }}</td>
-            <td id="block-unblock-user-btn-{{ account.account_pk }}" class="py-2 px-4">
+            <td class="py-2 px-4">{{ account.user_name }} {{ account.user_last_name }}</td>
+            <td class="py-2 px-4">{{ account.user_email }}</td>
+            <td class="py-2 px-4">{{ account.user_street }}, {{ account.user_postalcode }} {{ account.user_city }}</td>
+            <td class="py-2 px-4">{{ account.roles }}</td>
+            <td id="block-unblock-user-btn-{{ account.user_pk }}" class="py-2 px-4">
                 {% if not account.account_blocked_at %}
-                <form id="block-user-{{ account.account_pk }}">
+                <form id="block-user-{{ account.user_pk }}">
                     <button
                         class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                        mix-put="/block/user/{{ account.account_pk }}"
-                        mix-data="#block-user-{{ account.account_pk }}"
-                        mix-target="#block-user-{{ account.account_pk }}">
+                        mix-put="/block/user/{{ account.user_pk }}"
+                        mix-data="#block-user-{{ account.user_pk }}"
+                        mix-target="#block-user-{{ account.user_pk }}">
                         Block
                     </button>
                 </form>
                 {% else %}
-                <form id="unblock-user-{{ account.account_pk }}">
+                <form id="unblock-user-{{ account.user_pk }}">
                     <button
                         class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-                        mix-put="/unblock/user/{{ account.account_pk }}"
-                        mix-data="#unblock-user-{{ account.account_pk }}"
-                        mix-target="#unblock-user-{{ account.account_pk }}">
+                        mix-put="/unblock/user/{{ account.user_pk }}"
+                        mix-data="#unblock-user-{{ account.user_pk }}"
+                        mix-target="#unblock-user-{{ account.user_pk }}">
                         Unblock
                     </button>
                 </form>
                 {% endif %}
             </td>
-            <td class="py-2 px-4" id="delete-user-{{ account.account_pk }}">
-                {% if account.account_deleted_at == 0 %}
+            <td class="py-2 px-4" id="delete-user-{{ account.user_pk }}">
+                {% if account.user_deleted_at == 0 %}
                 <button
                     class=""
                     title="Delete User"
-                    mix-delete="/admin/delete/user/{{ account.account_pk }}"
-                    mix-target="#delete-user-{{ account.account_pk }}">
+                    mix-delete="/admin/delete/user/{{ account.user_pk }}"
+                    mix-target="#delete-user-{{ account.user_pk }}">
                     🗑️
                 </button>
                 {% else %}
-                <div class="flex items-center">{{ account.account_deleted_at }}</div>
+                <div class="flex items-center">{{ account.user_deleted_at | format_epoch }}</div>
                 {% endif %}
             </td>
         </tr>
-        {% endif %} 
-    {% endfor %}
-    </tbody>
-    </table>
 
-    <!-- Table for Restaurants -->
-    <h2 class="text-xl font-semibold mb-3">Restaurants</h2>
-    <table class="w-full table-auto border-collapse">
-        <thead>
-            <tr class="text-left border-b">
-                <th class="py-2 px-4">Name</th>
-                <th class="py-2 px-4">Email</th>
-                <th class="py-2 px-4">Block user</th>
-                <th class="py-2 px-4">Delete user</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for account in accounts %} {% if account.account_roles == 'restaurant' %}
-        <tr class="border-b">
-            <td class="py-2 px-4">{{ account.account_name }}</td>
-            <td class="py-2 px-4">{{ account.account_email }}</td>
-            <td id="block-unblock-restaurant-btn-{{ account.account_pk }}" class="py-2 px-4">
-                {% if not account.account_blocked_at %}
-                <form id="block-restaurant-{{ account.account_pk }}">
-                    <button
-                        class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                        mix-put="/block/restaurant/{{ account.account_pk }}"
-                        mix-data="#block-restaurant-{{ account.account_pk }}"
-                        mix-target="#block-restaurant-{{ account.account_pk }}">
-                        Block
-                    </button>
-                </form>
-                {% else %}
-                <form id="unblock-restaurant-{{ account.account_pk }}">
-                    <button
-                        class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
-                        mix-put="/unblock/restaurant/{{ account.account_pk }}"
-                        mix-data="#unblock-restaurant-{{ account.account_pk }}"
-                        mix-target="#unblock-restaurant-{{ account.account_pk }}">
-                        Unblock
-                    </button>
-                </form>
-                {% endif %}
-            </td>
-            <td id="delete-restaurant-{{ account.account_pk }}">
-                {% if account.account_deleted_at == 0 %}
-                <button
-                    class=""
-                    title="Delete User"
-                    mix-delete="/admin/delete/restaurant/{{ account.account_pk }}"
-                    mix-target="#delete-restaurant-{{ account.account_pk }}">
-                    🗑️
-                </button>
-                {% else %}
-                <div class="flex items-center">{{ account.account_deleted_at }}</div>
-                {% endif %}
-            </td>
-        </tr>
-        {% endif %} {% endfor %}
+        {% endfor %}
     </tbody>
-    </table>
+</table>
+{% include "___btn_more.html"%}
 </main>
 
 {% include "_bottom.html" %}
