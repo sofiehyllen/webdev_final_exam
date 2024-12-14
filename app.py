@@ -373,7 +373,7 @@ def view_all_items(role=None):
                 i.item_title, 
                 i.item_description, 
                 i.item_price, 
-                GROUP_CONCAT(ii.item_image_name) AS item_image_names
+                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name ASC) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0
@@ -402,7 +402,7 @@ def get_item_by_pk(item_pk):
                 i.item_title, 
                 i.item_description, 
                 i.item_price, 
-                GROUP_CONCAT(ii.item_image_name) AS item_image_names
+                GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name ASC) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0 AND i.item_pk = %s
@@ -439,7 +439,7 @@ def get_items_from_basket(basket):
         # Construct the query to fetch item details
         query = f'''
             SELECT i.item_pk, i.item_title, i.item_description, i.item_price, 
-                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
+                    GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name ASC) AS item_image_names
             FROM items i
             LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
             WHERE i.item_deleted_at = 0 AND i.item_pk IN ({placeholders})
