@@ -85,3 +85,48 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    function showSlide(itemPk, index) {
+        const slider = document.getElementById(`slider-${itemPk}`);  // Use the full item_pk as the ID
+    
+        const images = slider.querySelectorAll(".slider-image");
+        if (index >= images.length) index = 0;
+        if (index < 0) index = images.length - 1;
+    
+        images.forEach(slide => slide.classList.add('hidden'));  // Hide all images
+        images[index]?.classList.remove('hidden');  // Show the current image
+    }
+    
+    function moveSlide(itemPk, direction) {
+        const slider = document.getElementById(`slider-${itemPk}`);
+        const images = slider.querySelectorAll(".slider-image");
+
+        let currentIndex = Array.from(images).findIndex(slide => !slide.classList.contains('hidden'));
+        currentIndex += direction;
+        showSlide(itemPk, currentIndex);
+    }
+
+    // Add event listeners for the buttons for each item
+    document.querySelectorAll('.prev-arrow').forEach(prevButton => {
+        const itemPk = prevButton.closest('.group').id.replace('slider-', '');  // Extract item_pk from parent ID
+        prevButton.addEventListener('click', function() {
+            moveSlide(itemPk, -1);  // Move to the previous slide
+        });
+    });
+
+    document.querySelectorAll('.next-arrow').forEach(nextButton => {
+        const itemPk = nextButton.closest('.group').id.replace('slider-', '');  // Extract item_pk from parent ID
+        nextButton.addEventListener('click', function() {
+            moveSlide(itemPk, 1);   // Move to the next slide
+        });
+    });
+
+    // Initialize each slider to show the first image
+    document.querySelectorAll('.image-slider').forEach(slider => {
+        const itemPk = slider.id.replace('slider-', '');  // Extract item_pk from slider ID
+        showSlide(itemPk, 0);  // Show the first image on initialization
+    });
+});
