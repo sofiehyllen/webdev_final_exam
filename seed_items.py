@@ -76,8 +76,8 @@ try:
             item = {
                 "item_pk": item_pk,
                 "item_title": item_title,
-                "item_description": fake.text(max_nb_chars=200),
-                "item_price": round(random.uniform(5.0, 299.0), 2),
+                "item_description": fake.text(max_nb_chars=100),
+                "item_price": "{:.2f}".format(round(random.uniform(5.0, 299.0), 0)),
                 "item_created_at": int(time.time()),
                 "item_deleted_at": 0,
                 "item_blocked_at": 0,

@@ -41,7 +41,7 @@
                 accept=".png, .jpg, .jpeg, .gif"
                 mix-check="{{ x.ALLOWED_FILE_REGEX }}"
                 multiple />
-            <pre id="fileList"></pre>
+            <div id="selectedFiles"></div>
         </div>
 
         <button type="submit" class="btn-primary rounded-md" mix-post="/items" mix-data="#frm_create_item">Create item</button>

@@ -9,15 +9,28 @@
             <h2 class="text-2xl font-semibold mb-6">All restaurants</h2>
             {% if address %}
                 <div class="h-[35rem] overflow-y-auto">
-                    <ul class="space-y-4">
+                    <ul class="space-y-4 p-3">
                         {% for addr in address %}
-                            <li class="bg-white p-4 gap-3 flex rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                                <img src="{{ url_for('static', filename='restaurant_images/' + addr.restaurant_image_name) }}" alt="{{ addr.restaurant_name }}" class="w-32 h-20 object-cover rounded-md">
-                                <div>
-                                    <h3 class="text-xl font-bold text-blue-600">{{ addr.restaurant_name }}</h3>
-                                    <p class="text-gray-700">{{ addr.restaurant_street }}, {{ addr.restaurant_postalcode }} {{ addr.restaurant_city }}</p>
-                                </div>
-                            </li>
+                        <a href="/customer/restaurant/{{ addr.restaurant_pk }}" class="w-full block group relative">
+                            <div class="shadow-md rounded-lg h-36 border-1 border-zinc-100 w-full overflow-hidden relative">
+                                <!-- Overlay -->
+                                <div class="absolute inset-0 bg-blue-200 bg-opacity-20 transition-opacity opacity-0 group-hover:opacity-80"></div>
+                                
+                                <article class="flex p-3 w-full h-full gap-5 relative">
+                                    <div class="w-1/3 h-full overflow-hidden flex justify-center items-center rounded-lg relative">
+                                        <img src="{{ url_for('static', filename='restaurant_images/' + addr.restaurant_image_name) }}" 
+                                                alt="{{ addr.restaurant_name }}"
+                                                class="h-full w-full object-cover" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xl font-semibold pb-2">{{ addr.restaurant_name }}</p>
+                                        <p class="text-gray-500 text-sm font-light">{{ addr.restaurant_street }}, {{ addr.restaurant_postalcode }} {{ addr.restaurant_city }}</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </a>
+                        
+                        
                         {% endfor %}
                     </ul>
                 </div>

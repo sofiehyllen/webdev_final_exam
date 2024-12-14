@@ -6,11 +6,11 @@
 
 @layer components {
   .btn-primary {
-    @apply py-2 px-5 bg-blue-700 text-white rounded-full shadow-sm transition-colors transform hover:bg-blue-600;
+    @apply py-2 px-5 bg-blue-700 text-white rounded-full shadow-sm transition-colors transform hover:bg-blue-600 cursor-pointer;
   }
 
   .btn-secondary {
-    @apply py-2 px-5 text-sm bg-blue-50 text-blue-700 rounded-full shadow-sm transition-colors transform hover:bg-blue-100;
+    @apply py-2 px-5 text-sm bg-blue-50 text-blue-700 rounded-full shadow-sm transition-colors transform hover:bg-blue-100 cursor-pointer;
   }
 
   input, select, textarea {

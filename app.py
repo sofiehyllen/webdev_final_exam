@@ -48,9 +48,9 @@ def _________GET_________(): pass
 def view_index():    
     view = request.args.get("view", "login") 
     if view == "login":
-        content_template = "view_login.html"
+        content_template = "__frm_login.html"
     elif view == "signup":
-        content_template = "view_signup.html"
+        content_template = "__frm_signup.html"
     else:
         content_template = "view_login.html" 
     return render_template("view_index.html", x=x,  message=request.args.get("message", ""), content_template=content_template)
@@ -133,7 +133,7 @@ def view_forgot_password():
 @x.no_cache
 def view_reset_password(reset_password_key):
     if not reset_password_key:
-        return redirect(url_for("view_login"))
+        return redirect(url_for("view_index"))
     return render_template("view_reset_password.html", x=x, reset_password_key=reset_password_key, title="Reset password")
 
 
@@ -1068,6 +1068,7 @@ def view_edit_item(item_pk):
     item = get_item_for_edit(item_pk)
     if isinstance(item, tuple):
         return item
+    
 
     return render_template("view_edit_item.html", item=item, user=user, x=x)
 
@@ -1259,7 +1260,7 @@ def get_more_items(table_name, page_number):
                     i.item_title, 
                     i.item_description, 
                     i.item_price, 
-                    GROUP_CONCAT(ii.item_image_name) AS item_image_names
+                    GROUP_CONCAT(ii.item_image_name ORDER BY ii.item_image_name ASC) AS item_image_names
                 FROM items i
                 LEFT JOIN item_images ii ON i.item_pk = ii.item_image_item_fk
                 WHERE i.item_deleted_at = 0
@@ -2623,7 +2624,8 @@ def delete_item_image(item_pk, item_image_pk):
 
         # Send a response indicating success
         toast = render_template("___toast.html", message="Image deleted successfully")
-        return f"""<template mix-target="#toast">{toast}</template>"""
+        return f"""<template mix-target="#toast">{toast}</template>
+                    <template mix-target="#img-container-{ item_image_pk }" mix-replace></template>"""
 
     except Exception as ex:
         ic(ex)

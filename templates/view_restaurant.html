@@ -1,9 +1,46 @@
 {% include "_top_logged.html" %}
 
-<main class="flex flex-col px-20">
-    <div class="w-full">
-        <h1>Restaurant</h1>
-        {{ user }}
+<main class="w-full px-20">
+    <!-- Welcome Message -->
+    <div class="mb-12">
+        <h2 class="text-4xl font-semibold">{{ user.account_name }}</h2>
+        <p class="text-2xl font-baloo">Manage your orders, menu, and sales performance easily from here.</p>
+    </div>
+
+    <!-- Overview Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-40">
+        <!-- Active Orders -->
+        <div class="bg-white shadow-lg rounded-lg p-4 flex flex-col items-center">
+            <h3 class="text-lg font-semibold mb-2">Active Orders</h3>
+            <p class="text-gray-500 mb-4">You have <span class="text-green-600 font-bold">8</span> active orders.</p>
+            <p class="btn-secondary">
+                View Orders
+            </p>
+        </div>
+
+        <!-- Sales Performance -->
+        <div class="bg-white shadow-lg rounded-lg p-4 flex flex-col items-center">
+            <h3 class="text-lg font-semibold mb-2">Total Sales</h3>
+            <p class="text-gray-500 mb-4">Your sales this month: <span class="text-green-600 font-bold">$3,450</span></p>
+            <p class="btn-secondary">
+                View Sales
+            </p>
+        </div>
+
+        <!-- Manage Menu -->
+        <div class="bg-white shadow-lg rounded-lg p-4 flex flex-col items-center">
+            <h3 class="text-lg font-semibold mb-2">Manage Menu</h3>
+            <p class="text-gray-500 mb-4">Add, update, or remove menu items.</p>
+            <a href="{{ url_for('view_my_items')}}" class="btn-secondary">
+                Manage Menu
+            </a>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div class="mt-12 bg-blue-50 border-l-4 border-blue-400 p-4">
+        <h4 class="text-blue-800 font-semibold">Important Notification</h4>
+        <p class="text-blue-700">Please update your menu regularly to attract more customers!</p>
     </div>
 </main>
 

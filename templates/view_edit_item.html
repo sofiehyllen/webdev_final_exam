@@ -47,7 +47,7 @@
         
         <div class="flex flex-wrap gap-3">
           {% for image in item.images %}
-          <div class="w-36 h-16 overflow-hidden flex justify-center items-center rounded-md relative">
+          <div id="img-container-{{ image.item_image_pk }}" class="w-36 h-16 overflow-hidden flex justify-center items-center rounded-md relative">
             <img src="{{ url_for('static', filename='item_images/' + image.item_image_name) }}" alt="Item Image" class="h-full w-full object-cover" id="{{ image.item_image_pk }}"/>
             <button mix-delete="/restaurant/delete/item-image/{{ item.item_pk }}/{{ image.item_image_pk }}"
                     class="absolute leading-none top-2 right-2 pt-0.5 pb-1.5 px-2 rounded-full  text-xl bg-gray-400 bg-opacity-40 text-white hover:bg-gray-600 hover:bg-opacity-70 transition-colors duration-200 ease-in-out">
