@@ -307,6 +307,9 @@ def get_map_locations():
         for address in addresses:
             restaurant_pk = address["restaurant_pk"]
             restaurant_name = address["restaurant_name"]
+            restaurant_street = address["restaurant_street"]
+            restaurant_postalcode = address["restaurant_postalcode"]
+            restaurant_city = address["restaurant_city"]
             restaurant_image_name = address["restaurant_image_name"]
             latitude = address["restaurant_latitude"]
             longitude = address["restaurant_longitude"]
@@ -314,6 +317,9 @@ def get_map_locations():
             popup_html = render_template(
                 '___map_popup.html',
                 restaurant_name=restaurant_name,
+                restaurant_street=restaurant_street,
+                restaurant_postalcode=restaurant_postalcode,
+                restaurant_city=restaurant_city,
                 restaurant_image_name=restaurant_image_name,
                 restaurant_pk=restaurant_pk
             )
