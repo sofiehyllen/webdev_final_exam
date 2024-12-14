@@ -795,9 +795,6 @@ def view_all_users():
         cursor.execute(q_total_count)
         total_count_result = cursor.fetchone()
 
-        # Debugging output to check the result
-        ic(f"Total Count Result: {total_count_result}")
-
         # Handle result as a dictionary and get the count value
         total_count = total_count_result.get('COUNT(DISTINCT u.user_pk)', 0)
 
@@ -833,6 +830,10 @@ def view_all_restaurants_admin():
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
         
+        per_page = 10  # Number of results per page
+        page = request.args.get('page', 1, type=int)  # Get current page (default to 1)
+        offset = (page - 1) * per_page  # Calculate the offset
+
         db, cursor = x.db()
 
         q_restaurant = """
@@ -846,13 +847,24 @@ def view_all_restaurants_admin():
                 restaurant_blocked_at, 
                 restaurant_deleted_at
             FROM restaurants
-            LIMIT 0,10"""
-        cursor.execute(q_restaurant)
+            GROUP BY restaurants.restaurant_pk
+            LIMIT %s OFFSET %s
+            """
+        cursor.execute(q_restaurant, (per_page, offset))
         restaurants = cursor.fetchall()
 
+        q_total_count = """
+            SELECT COUNT(DISTINCT restaurants.restaurant_pk) 
+            FROM restaurants
+            """
+        cursor.execute(q_total_count)
+        total_count_result = cursor.fetchone()
 
-
-        return render_template('view_all_restaurants_admin.html', user=user, restaurants=restaurants)
+        total_count = total_count_result.get('COUNT(DISTINCT restaurants.restaurant_pk)', 0)
+        # Calculate total pages
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        return render_template('view_all_restaurants_admin.html', user=user, restaurants=restaurants, current_page=page, total_pages=total_pages)
 
     except Exception as ex:
         ic(ex)
@@ -873,7 +885,13 @@ def view_all_items_admin():
         user = session.get("account")
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
+        
+        per_page = 10  # Number of results per page
+        page = request.args.get('page', 1, type=int)  # Get current page (default to 1)
+        offset = (page - 1) * per_page  # Calculate the offset
+
         db, cursor = x.db()
+
         q = '''
             SELECT 
                 items.item_pk, 
@@ -884,11 +902,25 @@ def view_all_items_admin():
                 restaurants.restaurant_name
             FROM items
             LEFT JOIN restaurants ON items.item_restaurant_fk = restaurants.restaurant_pk
+            LIMIT %s OFFSET %s
         '''
-        cursor.execute(q)
+        cursor.execute(q, (per_page, offset))
         items = cursor.fetchall()
 
-        return render_template('view_all_items_admin.html', user=user, items=items)
+        q_total_count = """
+            SELECT COUNT(DISTINCT items.item_pk) 
+            FROM items
+            LEFT JOIN restaurants ON items.item_restaurant_fk = restaurants.restaurant_pk
+        """
+        cursor.execute(q_total_count)
+        total_count_result = cursor.fetchone()
+
+        total_count = total_count_result.get('COUNT(DISTINCT items.item_pk)', 0)
+
+        # Calculate total pages
+        total_pages = (total_count + per_page - 1) // per_page  # Round up
+
+        return render_template('view_all_items_admin.html', user=user, items=items, current_page=page, total_pages=total_pages)
 
     except Exception as ex:
         ic(ex)

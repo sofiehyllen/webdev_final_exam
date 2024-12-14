@@ -16,7 +16,7 @@
     <div class="flex-1">
         <h1 class="text-4xl font-semibold mb-2">Restaurants</h1> 
         <h2 class="text-2xl font-semibold mb-10">All registered restaurant accounts</h2>
-            <table class="w-full table-auto border-collapse">
+            <table class="w-full table-auto border-collapse mb-6">
                 <thead>
                     <tr class="text-left border-b">
                         <th class="py-2 px-4">Name</th>
@@ -71,7 +71,29 @@
                 </tr>
                 {% endfor %}
             </tbody>
-            </table>
+        </table>
+        <div class="flex justify-center items-center space-x-4">
+            <!-- Left Arrow -->
+            {% if current_page > 1 %}
+                <a href="{{ url_for('view_all_restaurants_admin', page=current_page - 1) }}" class="bg-blue-50 text-blue-700 rounded-full text-lg size-7 flex items-center justify-center transition-colors hover:bg-blue-100">
+                    &#8592;
+                </a>
+            {% else %}
+                <span class="rounded-full text-lg size-7 flex items-center justify-center text-zinc-400 bg-zinc-100 cursor-default">&#8592;</span>
+            {% endif %}
+            
+            <!-- Current Page / Total Pages -->
+            <span>{{ current_page }} / {{ total_pages }}</span>
+            
+            <!-- Right Arrow -->
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('view_all_restaurants_admin', page=current_page + 1) }}" class="bg-blue-50 text-blue-700 rounded-full text-lg size-7 flex items-center justify-center transition-colors hover:bg-blue-100">
+                    &#8594;
+                </a>
+            {% else %}
+                <span class="rounded-full text-lg size-7 flex items-center justify-center text-zinc-400 bg-zinc-100 cursor-default">&#8594;</span>
+            {% endif %}
+        </div>
     </div>
 </main>
 
