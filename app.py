@@ -744,8 +744,6 @@ def format_epoch(value):
     return "N/A"
 
 
-
-##############################
 @app.get("/admin/users")
 @x.no_cache
 def view_all_users():
@@ -754,7 +752,14 @@ def view_all_users():
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
         
+        # Pagination parameters
+        per_page = 10  # Number of results per page
+        page = request.args.get('page', 1, type=int)  # Get current page (default to 1)
+        offset = (page - 1) * per_page  # Calculate the offset
+
         db, cursor = x.db()
+
+        # SQL query for paginated results
         q_user = """
             SELECT 
                 u.user_pk, 
@@ -775,11 +780,35 @@ def view_all_users():
                 roles r ON ur.user_role_role_fk = r.role_pk
             GROUP BY 
                 u.user_pk
-            LIMIT 0, 10;"""
-        cursor.execute(q_user)
+            LIMIT %s OFFSET %s
+        """
+        cursor.execute(q_user, (per_page, offset))
         accounts = cursor.fetchall()
 
-        return render_template('view_all_users.html', user=user, accounts=accounts)
+        # Get total number of records for pagination
+        q_total_count = """
+            SELECT COUNT(DISTINCT u.user_pk) 
+            FROM users u
+            LEFT JOIN users_roles ur ON u.user_pk = ur.user_role_user_fk
+            LEFT JOIN roles r ON ur.user_role_role_fk = r.role_pk
+        """
+        cursor.execute(q_total_count)
+        total_count_result = cursor.fetchone()
+
+        # Debugging output to check the result
+        ic(f"Total Count Result: {total_count_result}")
+
+        # Handle result as a dictionary and get the count value
+        total_count = total_count_result.get('COUNT(DISTINCT u.user_pk)', 0)
+
+        # Calculate total pages
+        total_pages = (total_count + per_page - 1) // per_page  # Round up
+
+        return render_template('view_all_users.html', 
+                                user=user, 
+                                accounts=accounts, 
+                                current_page=page,
+                                total_pages=total_pages)
 
     except Exception as ex:
         ic(ex)
@@ -789,6 +818,9 @@ def view_all_users():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()
+
+
+
 
 
 
