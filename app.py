@@ -191,9 +191,60 @@ def view_admin():
     user = session.get("account")
     if not 'admin' in user.get("roles"):
         return redirect(url_for("view_login"))
-    return render_template("view_admin.html", user=user)
+    
+    dashboard_counts = get_admin_dashboard_data()
+
+    return render_template("view_admin.html", 
+                            user=user, 
+                            customer_count=dashboard_counts['customer_count'], 
+                            partner_count=dashboard_counts['partner_count'], 
+                            restaurant_count=dashboard_counts['restaurant_count'])
 
 
+
+def get_admin_dashboard_data():
+    try:
+        db, cursor = x.db()
+
+        q_dashboard_counts = """
+            SELECT 
+                SUM(CASE WHEN r.role_name = 'customer' THEN 1 ELSE 0 END) AS customer_count,
+                SUM(CASE WHEN r.role_name = 'partner' THEN 1 ELSE 0 END) AS partner_count,
+                (SELECT COUNT(*) FROM restaurants) AS restaurant_count
+            FROM users u
+            LEFT JOIN users_roles ur ON u.user_pk = ur.user_role_user_fk
+            LEFT JOIN roles r ON ur.user_role_role_fk = r.role_pk
+        """
+
+        cursor.execute(q_dashboard_counts)
+        dashboard_counts = cursor.fetchone()
+
+        customer_count = dashboard_counts['customer_count'] if dashboard_counts else 0
+        partner_count = dashboard_counts['partner_count'] if dashboard_counts else 0
+        restaurant_count = dashboard_counts['restaurant_count'] if dashboard_counts else 0
+
+        return {
+            'customer_count': customer_count,
+            'partner_count': partner_count,
+            'restaurant_count': restaurant_count,
+        }
+
+    except Exception as ex:
+        ic(ex)
+        if "db" in locals(): db.rollback()
+        if isinstance(ex, x.CustomException): 
+            toast = render_template("___toast.html", message=ex.message)
+            return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", ex.code    
+        if isinstance(ex, x.mysql.connector.Error):
+            ic(ex)
+            if "users.user_email" in str(ex): 
+                toast = render_template("___toast.html", message="email not available")
+                return f"""<template mix-target="#toast" mix-bottom>{toast}</template>""", 400
+            return f"""<template mix-target="#toast" mix-bottom>System upgrating</template>""", 500        
+        return f"""<template mix-target="#toast" mix-bottom>System under maintenance</template>""", 500    
+    finally:
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
 
 ##############################
 def get_restaurants_data(limit=None, offset=None):
