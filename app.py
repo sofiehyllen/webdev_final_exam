@@ -997,7 +997,7 @@ def view_edit_profile():
     if not user: 
         return redirect(url_for("view_login"))
     user_pk = user.get("account_pk")
-    if 'customer' not in user.get("roles") and 'partner' not in user.get("roles"):
+    if 'customer' not in user.get("roles") and 'partner' not in user.get("roles") and 'admin' not in user.get("roles"):
         return redirect(url_for('view_login'))
     role = redis_client.get(f"user:{user_pk}:role")
     role = role if role else ""

@@ -1,15 +1,9 @@
-<div class="flex w-full items-center py-5 border-b border-zinc-200 mb-14">
-  <div class="pl-20 w-1/3">
+<div class="flex w-full items-center justify-between py-5 border-b border-zinc-200 mb-14">
+  <div class="pl-20">
     <a class="text-5xl font-bold font-baloo" href="/{{ user.roles[0] }}">Wolt</a>
   </div>
 
-  <div class="w-1/3 flex justify-center gap-4">
-    <a href="{{url_for('view_all_users')}}" class="btn-primary">See all users</a>
-    <a href="{{url_for('view_all_restaurants_admin')}}" class="btn-primary">See all restaurants</a>
-    <a href="{{url_for('view_all_items_admin')}}" class="btn-primary">See all items</a>
-  </div>
-
-  <div class="relative dropdown-container pr-20 w-1/3 flex justify-end">
+  <div class="relative dropdown-container pr-20 flex justify-end">
     <button class="flex justify-between items-center gap-2 pr-3 p-0.5 rounded-full cursor-pointer hover:bg-zinc-300 bg-zinc-200" id="dropdown-btn">
       <span class=" px-2 py-1 rounded-full flex justify-center items-center bg-[#CFFFCC] border-2 border-white">
         <p class="uppercase text-sm text-zinc-500">{{ user.account_name }}</p>

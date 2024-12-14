@@ -2,8 +2,12 @@
 module.exports = {
   content: ["./templates/**/*.html", "./static/ui.js"],
   theme: {
-
     extend: {
+      boxShadow: {
+        'md': '0 3px 7px rgba(0, 0, 0, 0.1)',
+        'lg': '2px 4px 9px rgba(0, 0, 0, 0.12)',
+
+      },
       borderWidth: {
         1: '1px'
       },
