@@ -21,10 +21,10 @@ def backup_database():
     try:
         # Connect to the database
         connection = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME
+            host="mysql",      
+            user= "root",
+            password= "password",
+            database="company"  
         )
 
         cursor = connection.cursor()

@@ -45,6 +45,7 @@ def _________GET_________(): pass
 
 ##############################
 @app.get("/")
+@x.no_cache
 def view_index():    
     view = request.args.get("view", "login") 
     if view == "login":
@@ -178,6 +179,8 @@ def view_partner(role=None):
 @x.no_cache
 def view_restaurant():
     user = session.get("account")
+    if not user:
+        return redirect(url_for("view_login"))
     if not 'restaurant' in user.get("roles"):
         return redirect(url_for("view_login"))
     return render_template("view_restaurant.html", user=user)
@@ -189,6 +192,8 @@ def view_restaurant():
 @x.no_cache
 def view_admin():
     user = session.get("account")
+    if not user:
+        return redirect(url_for("view_login"))
     if not 'admin' in user.get("roles"):
         return redirect(url_for("view_login"))
     
@@ -806,6 +811,8 @@ def format_epoch(value):
 def view_all_users():
     try:
         user = session.get("account")
+        if not user:
+            return redirect(url_for("view_login"))
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
         
@@ -884,6 +891,8 @@ def view_all_users():
 def view_all_restaurants_admin():
     try:
         user = session.get("account")
+        if not user: 
+            return redirect(url_for("view_login"))
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
         
@@ -940,6 +949,8 @@ def view_all_restaurants_admin():
 def view_all_items_admin():
     try:
         user = session.get("account")
+        if not user: 
+            return redirect(url_for("view_login"))
         if not 'admin' in user.get("roles"):
             return redirect(url_for("view_login"))
         
@@ -1002,6 +1013,8 @@ def view_all_items_admin():
 @x.no_cache
 def view_create_item():
     user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
     if not 'restaurant' in user.get("roles"):
         return redirect(url_for("view_login"))
     return render_template("view_create_item.html", user=user, x=x)
@@ -1013,6 +1026,8 @@ def view_create_item():
 @x.no_cache
 def view_my_items():
     user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
     restaurant_pk = user.get("account_pk", "")
     if not 'restaurant' in user.get("roles"):
         return redirect(url_for("view_login"))
@@ -1062,6 +1077,8 @@ def get_items_for_restaurant(restaurant_pk):
 @x.no_cache
 def view_edit_item(item_pk):
     user = session.get("account")
+    if not user: 
+        return redirect(url_for("view_login"))
     if not 'restaurant' in user.get("roles"):
         return redirect(url_for("view_login"))
 
@@ -1114,6 +1131,7 @@ def get_item_for_edit(item_pk):
 
 ##############################
 @app.get("/edit-profile")
+@x.no_cache
 def view_edit_profile():
     user = session.get("account")
     if not user: 
@@ -1130,6 +1148,7 @@ def view_edit_profile():
 
 ##############################
 @app.get("/edit-restaurant-profile")
+@x.no_cache
 def view_edit_restaurant_profile():
     user = session.get("account")
     if not user: 
@@ -1563,7 +1582,7 @@ def login():
             SELECT account_pk, account_name, restaurant_description, account_street, 
             account_postalcode, account_city, account_email,
             account_password, account_verified_at, account_roles,
-            user_last_name, account_deleted_at
+            user_last_name, account_deleted_at, account_blocked_at
             FROM accounts
             LEFT JOIN users ON accounts.account_pk = users.user_pk
             LEFT JOIN restaurants ON accounts.account_pk = restaurants.restaurant_pk
@@ -1590,6 +1609,10 @@ def login():
         # Check if account is deleted
         if rows[0]["account_deleted_at"]:
             toast = render_template("___toast.html", message="Account deleted")
+            return f"""<template mix-target="#toast">{toast}</template>""", 403
+        
+        if rows[0]["account_blocked_at"]:
+            toast = render_template("___toast.html", message="Account blocked")
             return f"""<template mix-target="#toast">{toast}</template>""", 403
         
 
@@ -2364,7 +2387,7 @@ def _________DELETE_________(): pass
 
 ##############################
 @app.delete("/admin/delete/<target_type>/<pk>")
-def delete_target(target_type, pk):
+def admin_delete_target(target_type, pk):
     try:
         # Check for user session and admin role
         account = session.get("account")
@@ -2421,8 +2444,9 @@ def delete_target(target_type, pk):
         if target_type == "item":
             x.send_item_delete_email(email)  
 
+        format_deleted_at = datetime.fromtimestamp(deleted_at).strftime("%d. %b. %Y, %H:%M")
 
-        deleted_at_html = render_template("___deleted_at.html", deleted_at=deleted_at)
+        deleted_at_html = render_template("___deleted_at.html", deleted_at=format_deleted_at)
         toast = render_template("___toast.html", message=f"{target_type.capitalize()} deleted")
         return f"""
                 <template mix-target="#delete-{target_type}-{pk}" mix-replace>

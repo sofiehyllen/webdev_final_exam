@@ -1,3 +1,4 @@
+// dropdoen
 const dropdowns = Array.from(document.getElementsByClassName('dropdown-container'));
 
 dropdowns.forEach(dropdown => {
@@ -18,20 +19,23 @@ dropdowns.forEach(dropdown => {
     });
 });
 
+
+
+// show search results
 function showResults() {
     document.getElementById('search-results').classList.remove('hidden');
 }
 
-///////////////////////////////////////////////
-// Open and close modal for deleting profile
-// Handle delete modal visibility
+
+
+
+
+
 document.addEventListener("DOMContentLoaded", function () {
-    // Select buttons and modals using classes
     const openDeleteModalBtns = document.querySelectorAll(".open-delete-modal-btn");
     const deleteModals = document.querySelectorAll(".delete-modal");
     const cancelDeleteBtns = document.querySelectorAll(".cancel-delete-btn");
-    const confirmDeleteBtns = document.querySelectorAll(".confirm-delete-btn");
-
+    
     // Open the delete modal
     openDeleteModalBtns.forEach((btn, index) => {
         btn.addEventListener("click", function () {
@@ -39,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
             deleteModals[index]?.classList.add("flex");
         });
     });
-
+    
     // Close the delete modal
     cancelDeleteBtns.forEach((btn, index) => {
         btn.addEventListener("click", function () {
@@ -47,8 +51,9 @@ document.addEventListener("DOMContentLoaded", function () {
             deleteModals[index]?.classList.add("hidden");
         });
     });
+    
 
-    // Handle the delete action
+    const confirmDeleteBtns = document.querySelectorAll(".confirm-delete-btn");
     confirmDeleteBtns.forEach((btn, index) => {
         btn.addEventListener("click", function (e) {
             e.preventDefault();
@@ -85,6 +90,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+
+
+
+
+
+
+
 
 
 

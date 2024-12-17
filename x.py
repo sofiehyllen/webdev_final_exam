@@ -22,6 +22,16 @@ PARTNER_ROLE_PK = os.getenv("PARTNER_ROLE_PK")
 RESTAURANT_ROLE_PK = os.getenv("RESTAURANT_ROLE_PK")
 
 
+##############################
+def db():
+    db = mysql.connector.connect(
+        host="mysql",      
+        user= "root",
+        password= "password",
+        database="company"  
+    )
+    cursor = db.cursor(dictionary=True)
+    return db, cursor
 
 
 
@@ -56,16 +66,6 @@ except redis.ConnectionError as e:
     print(f"Error connecting to Redis: {e}")
 
 
-##############################
-def db():
-    db = mysql.connector.connect(
-        host="mysql",      
-        user= "root",
-        password= "password",
-        database="company"  
-    )
-    cursor = db.cursor(dictionary=True)
-    return db, cursor
 
 
 ##############################

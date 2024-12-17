@@ -37,7 +37,7 @@ try:
         raise ValueError("No restaurants found in the database.")
 
     # Define static values
-    item_images_folder = 'static/item_images'
+    item_images_folder = '/home/sofiehyllen/mysite/static/item_images'
     available_images = os.listdir(item_images_folder)
 
     dishes = [

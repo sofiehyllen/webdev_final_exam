@@ -64,7 +64,7 @@
                         🗑️
                     </button>
                     {% else %}
-                    <div class="flex items-center">{{ item.item_deleted_at }}</div>
+                    <div class="flex items-center">{{ item.item_deleted_at | format_epoch }}</div>
                     {% endif %}
                 </td>
             </tr>
