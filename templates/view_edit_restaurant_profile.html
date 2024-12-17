@@ -3,6 +3,7 @@
 <main class="w-full px-20">
     <h1 class="text-5xl font-bold pb-10">Edit profile</h1>
     <form action="PUT" id="edit-restaurant-frm" class="border-1 border-zinc-100 w-full max-w-md flex flex-col gap-6 mx-auto shadow-lg p-10 rounded-md">
+
         <div class="flex flex-col">
             <label for="user_name" class="text-sm text-gray-400 mb-1">
                 Restaurant Name
@@ -22,7 +23,20 @@
                 cols="50"
                 mix-check="{{ x.DESCRIPTION_REGEX }}">{{ user.account_description }}</textarea>
         </div>
-
+        <div class="w-full h-36 overflow-hidden flex justify-center items-center rounded-md relative">
+            <img src="{{ url_for('static', filename='restaurant_images/' + restaurant_image_name) }}" alt="Item Image" class="h-full w-full object-cover"/>
+        </div>
+        <div class="flex flex-col">
+            <label for="restaurant_image_name">
+                <span>Image</span>
+            </label>
+            <input
+                value="{{ restaurant_image_name }}"
+                type="file"
+                name="restaurant_image_name"
+                accept=".png, .jpg, .jpeg, .gif"
+                multiple />
+        </div>
         <div class="flex flex-col">
             <label for="user_street" class="text-sm text-gray-400 mb-1">Street</label>
             <input

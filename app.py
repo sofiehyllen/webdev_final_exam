@@ -1150,8 +1150,31 @@ def view_edit_restaurant_profile():
         return redirect(url_for("view_login"))
     if not 'restaurant' in user.get("roles"):
         return redirect(url_for("view_login"))
-    return render_template("view_edit_restaurant_profile.html", user=user, x=x)
-
+    user_pk = user.get('account_pk')
+    db, cursor = x.db()
+    restaurant_image_name = None  # Default value
+    
+    try:
+        # Query to fetch restaurant_image_name based on account_pk
+        q = """SELECT restaurant_image_name FROM restaurants WHERE restaurant_pk = %s"""
+        cursor.execute(q, (user_pk,))
+        result = cursor.fetchone()
+        
+        # Check if result exists and extract restaurant_image_name
+        if result:
+            restaurant_image_name = result['restaurant_image_name']
+    except Exception as e:
+        print(f"Error fetching restaurant image: {e}")  # Log the error
+    finally:
+        cursor.close()  # Ensure the cursor is closed
+        db.close()      # Ensure the database connection is closed
+    
+    return render_template(
+        "view_edit_restaurant_profile.html",
+        user=user,
+        x=x,
+        restaurant_image_name=restaurant_image_name
+    )
 
 
 ##############################
@@ -2034,8 +2057,32 @@ def restaurant_update():
             db, cursor = x.db()
 
             cursor.execute(
+            """SELECT restaurant_image_name, restaurant_email 
+                FROM restaurants 
+                WHERE restaurant_pk = %s""",
+            (restaurant_pk,))
+            current_user = cursor.fetchone()
+            if not current_user:
+                x.raise_custom_exception("User not found", 404)
+
+            # Handle the file upload
+            uploaded_file = request.files.get("restaurant_image_name")
+            if uploaded_file and uploaded_file.filename != "":
+                # Validate file extension
+                file_extension = os.path.splitext(uploaded_file.filename)[1][1:]
+                if file_extension not in x.ALLOWED_FILE_EXTENSIONS:
+                    x.raise_custom_exception("File invalid type", 400)
+
+                # Generate a unique filename and save the file
+                restaurant_image_name = f"{uuid.uuid4()}.{file_extension}"
+                uploaded_file.save(os.path.join(x.UPLOAD_RESTAURANT_FOLDER, restaurant_image_name))
+            else:
+                # No file uploaded, fallback to the existing image name
+                restaurant_image_name = current_user["restaurant_image_name"]
+
+            cursor.execute(
                 """ SELECT restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, 
-                    restaurant_city, restaurant_email, restaurant_verified_at, restaurant_verification_key 
+                    restaurant_city, restaurant_email, restaurant_image_name, restaurant_verified_at, restaurant_verification_key 
                     FROM restaurants 
                     WHERE restaurant_pk = %s""", (restaurant_pk,))
             current_user = cursor.fetchone()
@@ -2059,6 +2106,7 @@ def restaurant_update():
                 current_user["restaurant_street"] == restaurant_street and
                 current_user["restaurant_postalcode"] == restaurant_postalcode and
                 current_user["restaurant_city"] == restaurant_city and
+                current_user["restaurant_image_name"] == restaurant_image_name and
                 current_user["restaurant_email"] == restaurant_email ):
                 
                 toast = render_template("___toast.html", message="No changes made")
@@ -2068,11 +2116,11 @@ def restaurant_update():
 
             cursor.execute(
                 """UPDATE restaurants SET restaurant_name = %s, restaurant_description = %s, restaurant_street = %s, 
-                    restaurant_postalcode = %s, restaurant_city = %s, restaurant_email = %s, restaurant_updated_at = %s, 
-                    restaurant_verified_at = %s 
+                    restaurant_postalcode = %s, restaurant_city = %s, restaurant_email = %s, restaurant_image_name = %s, 
+                    restaurant_updated_at = %s, restaurant_verified_at = %s 
                 WHERE restaurant_pk = %s""",
                 (restaurant_name, restaurant_description, restaurant_street, restaurant_postalcode, restaurant_city, 
-                restaurant_email, restaurant_updated_at, restaurant_verified_at, restaurant_pk))
+                restaurant_email, restaurant_image_name, restaurant_updated_at, restaurant_verified_at, restaurant_pk))
             if cursor.rowcount != 1: 
                 x.raise_custom_exception("cannot update user", 401)
 
