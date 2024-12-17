@@ -27,6 +27,7 @@ def insert_restaurant(restaurant):
     cursor.execute(q, values)
 
 try:
+    cursor.execute("DELETE FROM restaurants")
     ###########################
     # Step 1: Insert a Specific Restaurant for Login (admin use)
     restaurant_pk = str(uuid.uuid4())
@@ -35,16 +36,16 @@ try:
 
     restaurant = {
         "restaurant_pk" : restaurant_pk,
-        "restaurant_name" : "Test Restaurant",
+        "restaurant_name" : "Restaurant Company",
         "restaurant_description" : fake.text(max_nb_chars=100),
-        "restaurant_street": "Test Street 123",
+        "restaurant_street": "Street 123",
         "restaurant_postalcode": 2200,
         "restaurant_city": "København",
         "restaurant_email" : restaurant_email,
         "restaurant_password" : restaurant_password,
-        "restaurant_image_name": "/home/sofiehyllen/mysite/restaurant_images/restaurant_1.jpg",
-        "restaurant_latitude": 55.686775,
-        "restaurant_longitude": 12.545967,
+        "restaurant_image_name": "restaurant_1.jpg",
+        "restaurant_latitude": 56.1600,
+        "restaurant_longitude": 10.2100,
         "restaurant_created_at" : int(time.time()),
         "restaurant_deleted_at" : 0,
         "restaurant_blocked_at" : 0,
@@ -72,10 +73,10 @@ try:
         "The Pasta Place", "Ocean's Bounty"
     ]
     image_folder = 'static/restaurant_images'
-    image_filenames = [f"restaurant_{i}.jpg" for i in range(1, 31)]
+    image_filenames = [f"restaurant_{i}.jpg" for i in range(2, 31)]
 
     restaurant_password = generate_password_hash("password")
-    for i in range(30):
+    for i in range(29):
         address = addresses[i]
         image_name = image_filenames[i]
         restaurant_name = restaurant_names[i]

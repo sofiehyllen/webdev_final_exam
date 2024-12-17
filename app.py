@@ -22,14 +22,9 @@ geolocator = Nominatim(user_agent="webdev_final_exam")
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SESSION_TYPE'] = 'filesystem'  # or 'redis', etc.
+app.config['SESSION_TYPE'] = 'filesystem'  
 Session(app)
-
-
-
-
-
-# app.secret_key = "your_secret_key"
+app.secret_key = os.getenv("APP_SECRET_KEY")
 
 ##############################
 ##############################
@@ -1321,6 +1316,7 @@ def get_more_items(table_name, page_number):
             elif table_name == "restaurants":
                 html_item = render_template("__restaurant.html", restaurant=result)
             html += html_item
+            ic(f"Item {result['item_pk']} images: {result['item_image_names']}")
 
         db.commit()
 

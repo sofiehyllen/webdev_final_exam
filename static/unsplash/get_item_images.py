@@ -57,4 +57,4 @@ def get_item_images(total_images=100):
             print(f"Failed to fetch images: {response.status_code}")
             break
 
-get_item_images(190)
+get_item_images(240)

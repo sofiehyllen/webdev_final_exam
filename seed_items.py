@@ -28,6 +28,8 @@ def insert_item_image(item_image):
     cursor.execute(query, values)
 
 try:
+    # Delete all data in items table before inserting new data
+    cursor.execute("DELETE FROM items")
     ############################## 
     # Create 8 items for each restaurants
     cursor.execute("SELECT restaurant_pk FROM restaurants")
