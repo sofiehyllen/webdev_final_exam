@@ -3,7 +3,6 @@ database_backup
 item_images
 restaurant_images
 flask_session/
-static/output.css
 node_modules/
 .env
 static/.DS_store
