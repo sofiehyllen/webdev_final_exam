@@ -45,27 +45,7 @@ def raise_custom_exception(error, status_code):
     raise CustomException(error, status_code)
 
 
-
-
-redis_host = os.getenv("REDIS_HOST")
-redis_port = os.getenv("REDIS_PORT") 
-redis_password = os.getenv("REDIS_PASSWORD")
-if not redis_host:
-    raise ValueError("REDIS_HOST is not set in environment variables.")
-
-try:
-    redis_client = redis.StrictRedis(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password,
-        decode_responses=True
-    ) 
-    redis_client.ping()  # Test the connection
-    print("Connection to RedisLabs successful!")
-except redis.ConnectionError as e:
-    print(f"Error connecting to Redis: {e}")
-
-
+redis_client = redis.StrictRedis(host='redis', port=6379, db=0, decode_responses=True)
 
 
 ##############################
@@ -98,7 +78,7 @@ def require_role(required_role):
                 return redirect(url_for("view_choose_role"))
 
             # Check if the required role is present
-            if required_role not in user.get("roles", []):
+            if not required_role in user.get("roles", []):
                 return redirect(url_for("view_login"))
             
             kwargs["role"] = role if role else ""  # Decode Redis byte string if necessary
@@ -335,6 +315,7 @@ def send_email(to_email, subject, body):
         return f"{subject} email sent"
     
     except Exception as ex:
+        ic(ex)
         raise_custom_exception(f"cannot send {subject.lower()} email", 500)
     finally:
         pass
@@ -343,7 +324,7 @@ def send_email(to_email, subject, body):
 
 ##############################
 def send_verify_email(to_email, account_verification_key):
-    body = f"""To verify your account, please <a href="http://127.0.0.1/verify/{account_verification_key}">click here</a>"""
+    body = f"""To verify your account, please <a href="https://sofiehyllen.eu.pythonanywhere.com/verify/{account_verification_key}">click here</a>"""
     return send_email(to_email, "Verify your account", body)
 
 
@@ -353,7 +334,7 @@ def send_reset_password_email(to_email, account_password_reset_key):
     body = f"""
     <p>Hello,</p>
     <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
-    <p><a href="http://127.0.0.1/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
+    <p><a href="https://sofiehyllen.eu.pythonanywhere.com/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
     <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
     <p>Thank you,<br>My company name</p>
     """

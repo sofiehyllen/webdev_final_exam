@@ -1407,6 +1407,7 @@ def set_role(role):
 ##############################
 @app.post("/logout")
 def logout():
+    session.clear()
     session.pop("account", None)
     return redirect(url_for("view_index"))
 
@@ -1474,8 +1475,9 @@ def signup():
 
         db.commit()
     
-        return """<template mix-redirect="/login"></template>""", 201
-    
+        message = "A verification email has been sent to your account. Please check your inbox."
+        return f"""<template mix-redirect="/login?message={message}"></template>""", 201
+
     except Exception as ex:
         ic(ex)
         if "db" in locals(): db.rollback()
@@ -1565,8 +1567,8 @@ def signup_restaurant():
 
         x.send_verify_email(restaurant_email, account_verification_key)
 
-
-        return """<template mix-redirect="/login"></template>""", 201
+        message = "A verification email has been sent to your account. Please check your inbox."
+        return f"""<template mix-redirect="/login?message={message}"></template>""", 201
     
     except Exception as ex:
         ic(ex)
@@ -1591,6 +1593,7 @@ def signup_restaurant():
 @app.post("/login")
 def login():
     try:
+        message = request.args.get('message', '')
         account_email = x.validate_account_email("user_email")
         account_password = x.validate_account_password("user_password")
 
