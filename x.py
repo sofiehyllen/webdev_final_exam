@@ -300,7 +300,7 @@ def send_email(to_email, subject, body):
 
         # Create the email message
         message = MIMEMultipart()
-        message["From"] = "My company name"
+        message["From"] = "Wait"
         message["To"] = to_email
         message["Subject"] = subject
         message.attach(MIMEText(body, "html"))
@@ -324,19 +324,23 @@ def send_email(to_email, subject, body):
 
 ##############################
 def send_verify_email(to_email, account_verification_key):
-    body = f"""To verify your account, please <a href="https://sofiehyllen.eu.pythonanywhere.com/verify/{account_verification_key}">click here</a>"""
+    body = f"""
+    <p>Hello,</p>
+    To verify your account, please <a href="https://sofiehyllen.eu.pythonanywhere.com/verify/{account_verification_key}">click here</a>
+    <p>Sincerely,<br>Wait</p>
+    """
     return send_email(to_email, "Verify your account", body)
 
 
 
 ##############################
-def send_reset_password_email(to_email, account_password_reset_key):
+def send_reset_password_email(user_name, to_email, account_password_reset_key):
     body = f"""
-    <p>Hello,</p>
+    <p>Hello {user_name},</p>
     <p>We received a request to reset your password. If you made this request, please click the link below to reset your password:</p>
     <p><a href="https://sofiehyllen.eu.pythonanywhere.com/reset-password/{account_password_reset_key}">Reset Your Password</a></p>
     <p>If you did not request a password reset, you can safely ignore this email. Your password will remain the same.</p>
-    <p>Thank you,<br>My company name</p>
+    <p>Thank you,<br>Wait</p>
     """
     return send_email(to_email, "Reset Your Password", body)
 
@@ -347,7 +351,7 @@ def send_block_email(to_email):
     body = f"""
     <p>Hello,</p>
     <p>We contact you to inform you that your account has been blocked. If you have any questions, feel free to contact us.</p>
-    <p>Sincerely,<br>My company name</p>
+    <p>Sincerely,<br>Wait</p>
     """
     return send_email(to_email, "Your account has been blocked", body)
 
@@ -358,18 +362,18 @@ def send_item_block_email(to_email):
     body = f"""
     <p>Hello,</p>
     <p>We contact you to inform you that one of your menu items has been blocked. If you have any questions, feel free to contact us.</p>
-    <p>Sincerely,<br>My company name</p>
+    <p>Sincerely,<br>Wait</p>
     """
     return send_email(to_email, "Your menu item has been blocked", body)
 
 
 
 ##############################
-def send_delete_email(to_email):
+def send_delete_email(user_name, to_email):
     body = f"""
-    <p>Hello,</p>
+    <p>Hello {user_name},</p>
     <p>We contact you to inform you that your account has been deleted. If you have any questions, feel free to contact us.</p>
-    <p>Sincerely,<br>My company name</p>
+    <p>Sincerely,<br>Wait</p>
     """
     return send_email(to_email, "Your account has been deleted", body)
 
@@ -380,21 +384,21 @@ def send_item_delete_email(to_email):
     body = f"""
     <p>Hello,</p>
     <p>We contact you to inform you that one of your menu items has been deleted. If you have any questions, feel free to contact us.</p>
-    <p>Sincerely,<br>My company name</p>
+    <p>Sincerely,<br>Wait</p>
     """
     return send_email(to_email, "Your menu item has been deleted", body)
 
 
 
 ##############################
-def send_order_confirmation_email(to_email, order_details, total_price):
+def send_order_confirmation_email(user_name, to_email, order_details, total_price):
     body = f"""
-    <p>Hello,</p>
+    <p>Hello {user_name},</p>
     <p>Thank you for your order! Below are the details of your purchase:</p>
     {order_details}
     <p><strong>Total Price: DKK {total_price}</strong></p>
     <p>We will process your order shortly. Thank you for shopping with us!</p>
-    <p>Sincerely,<br>My company name</p>
+    <p>Sincerely,<br>Wait</p>
     """
     return send_email(to_email, "Order Confirmation", body)
 

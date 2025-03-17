@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, redirect, url_for, make_response, request, jsonify
+from flask import Flask, session, render_template, redirect, url_for, request, jsonify, send_from_directory
 from flask_session import Session
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -25,6 +25,10 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'  
 Session(app)
 app.secret_key = os.getenv("APP_SECRET_KEY")
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 ##############################
 ##############################
@@ -1692,7 +1696,7 @@ def forgot_password():
 
         # Query the accounts view for both users and restaurants
         accounts_query = """
-            SELECT account_pk, account_email, account_roles, account_verified_at
+            SELECT account_pk, account_email, account_name, account_roles, account_verified_at
             FROM accounts
             WHERE account_email = %s
         """
@@ -1723,7 +1727,8 @@ def forgot_password():
         cursor.execute(update_query, (account_reset_password_key, account_email))
         db.commit()
 
-        x.send_reset_password_email(account_email, account_reset_password_key)
+        name = account["account_name"]
+        x.send_reset_password_email(name, account_email, account_reset_password_key)
 
         return """<template mix-redirect="/login"></template>""", 201
 
@@ -1901,6 +1906,7 @@ def send_order_email():
     try:
         user = session.get("account")
         user_email = user.get("account_email")
+        user_name = user.get("account_name")
         to_email = user_email  
 
         # Get the user's basket from Redis
@@ -1926,7 +1932,7 @@ def send_order_email():
 
         # Send the order confirmation email
         order = x.format_order_details(order)
-        x.send_order_confirmation_email(to_email, order, total_price)
+        x.send_order_confirmation_email(user_name, to_email, order, total_price)
 
         # Empty the basket after the email is sent 
         redis_client.delete(user_pk)
@@ -2448,8 +2454,8 @@ def admin_delete_target(target_type, pk):
 
         # Queries for different target types
         queries = {
-            "user": "SELECT user_pk, user_email FROM users WHERE user_pk = %s",
-            "restaurant": "SELECT restaurant_pk, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
+            "user": "SELECT user_pk, user_name, user_email FROM users WHERE user_pk = %s",
+            "restaurant": "SELECT restaurant_pk, restaurant_name, restaurant_email FROM restaurants WHERE restaurant_pk = %s",
             "item": "SELECT item_pk, item_restaurant_fk FROM items WHERE item_pk = %s"
         }
 
@@ -2486,8 +2492,12 @@ def admin_delete_target(target_type, pk):
         cursor.execute(q, (deleted_at, pk))
         db.commit()
 
-        if target_type in ["user", "restaurant"]:
-            x.send_delete_email(email)  
+        if target_type in "user":
+            user_name = result["user_name"]
+            x.send_delete_email(user_name, email)  
+        elif target_type in "restaurant":
+            restaurant_name = result["restaurant_name"]
+            x.send_delete_email(restaurant_name, email) 
         if target_type == "item":
             x.send_item_delete_email(email)  
 
@@ -2536,7 +2546,7 @@ def delete_user(account_pk):
 
         db, cursor = x.db()
 
-        q = "SELECT account_password, account_email FROM accounts WHERE account_pk = %s"
+        q = "SELECT account_password, account_email, account_name FROM accounts WHERE account_pk = %s"
         cursor.execute(q, (account_pk,))
         result = cursor.fetchone()
 
@@ -2567,7 +2577,8 @@ def delete_user(account_pk):
         session.pop("account", None)
 
         email = result["account_email"]
-        x.send_delete_email(email)
+        name = result["account_name"]
+        x.send_delete_email(name, email)
 
         return """<template mix-redirect="/login"></template>"""
 
