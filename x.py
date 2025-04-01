@@ -26,9 +26,9 @@ RESTAURANT_ROLE_PK = os.getenv("RESTAURANT_ROLE_PK")
 def db():
     db = mysql.connector.connect(
         host="mysql",      
-        user= "root",
-        password= "password",
-        database="company"  
+        user=os.environ("MYSQL_PASSWORD"),
+        password=os.environ("MYSQL_USERNAME"),
+        database=os.environ("MYSQL_DATABASE")  
     )
     cursor = db.cursor(dictionary=True)
     return db, cursor
