@@ -6,4 +6,5 @@ flask_session/
 node_modules/
 .env
 static/.DS_store
+.DS_store
 
