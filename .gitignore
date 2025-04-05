@@ -7,4 +7,5 @@ node_modules/
 .env
 static/.DS_store
 .DS_store
+backup_database.py
 
